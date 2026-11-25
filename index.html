@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0C0D0F">
+<title>Ápice · App do Personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0C0D0F; --s1:#141519; --s2:#1B1D22; --s3:#24272D; --line:#2C2F36;
+  --bone:#EDE8DF; --mute:#9A958C; --dim:#6B675F;
+  --red:#E5484D; --red2:#F08A8D; --redbg:rgba(229,72,77,.12);
+  --base:#8FBFA9; --forte:#8AA6D6; --palco:#D4B074;
+  --r:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--bone);font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit}
+.serif{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+
+.view{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 18px 110px;scrollbar-width:none}
+.view::-webkit-scrollbar{display:none}
+.tabbar{position:absolute;left:12px;right:12px;bottom:14px;height:66px;border-radius:24px;background:rgba(27,29,34,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;z-index:4}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--dim);width:72px}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button.on{color:var(--bone)}
+.tabbar button.on svg{color:var(--red)}
+.hd{display:flex;justify-content:space-between;align-items:center;margin:6px 0 18px}
+.hd h2{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.hd p{font-size:13px;color:var(--mute)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--s3);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none;border:1px solid var(--line)}
+.back{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);margin:4px 0 12px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.kpi small{font-size:11px;color:var(--mute);display:block}
+.kpi b{font-size:24px;font-weight:800;display:block;margin-top:6px;letter-spacing:-.02em}
+.kpi span{font-size:11px;color:var(--base)}
+.kpi span.neg{color:var(--red2)}
+.lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:22px 0 10px;display:flex;justify-content:space-between}
+.lbl a{letter-spacing:0;text-transform:none;color:var(--mute);font-weight:600;cursor:pointer}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.row .t{flex:1;min-width:0}
+.row .t b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{font-size:12px;color:var(--mute)}
+.chev{color:var(--dim)}
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.04em;white-space:nowrap}
+.alert{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;background:var(--s2);margin-bottom:8px;font-size:13px;line-height:1.4;cursor:pointer}
+.alert i{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+.alert small{color:var(--mute);display:block}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:16px;background:var(--red);color:#fff;font-weight:700;font-size:15px;width:100%}
+.btn.ghost{background:var(--s2);color:var(--bone);border:1px solid var(--line)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none}
+.chips button{padding:8px 14px;border-radius:99px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute);white-space:nowrap}
+.chips button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
+.search{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:0 14px;height:44px;margin-bottom:12px;color:var(--mute)}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--bone);font-size:14px}
+.bar{height:5px;border-radius:5px;background:var(--s3);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:5px}
+.hero{border-radius:22px;padding:20px;position:relative;overflow:hidden;margin-bottom:12px;cursor:pointer;border:1px solid var(--line)}
+.hero h4{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.hero p{font-size:13px;color:var(--mute);margin-top:4px;line-height:1.5;max-width:80%}
+.hero .meta{display:flex;gap:14px;margin-top:14px;font-size:12px;color:var(--bone);font-weight:600}
+.hero .step{position:absolute;right:16px;top:16px;font-size:11px;font-weight:700;color:var(--mute)}
+.stage{background:radial-gradient(120% 90% at 50% 0%,#1E2026 0%,#111215 70%);border:1px solid var(--line);border-radius:22px;margin-bottom:12px;position:relative;overflow:hidden}
+.stage svg{display:block;width:100%}
+.stage .ctl{position:absolute;right:12px;bottom:12px;display:flex;gap:6px}
+.stage .ctl button{height:30px;padding:0 12px;border-radius:99px;background:rgba(36,39,45,.9);border:1px solid var(--line);font-size:12px;font-weight:700}
+.stage .ctl button.on{background:var(--bone);color:var(--bg)}
+.stage .lg{position:absolute;left:14px;top:12px;font-size:11px;color:var(--mute);display:flex;gap:12px}
+.bmaps{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bmap{width:100%;display:block}
+.bmap path,.bmap ellipse,.bmap circle,.bmap rect{transition:fill .25s}
+.bmap .m{fill:#E3DED4}
+.bmap .n{fill:#B9B3A8}
+.bmap .p{fill:var(--red)}
+.bmap .s{fill:var(--red);fill-opacity:.45}
+.bmap.click .m{cursor:pointer}
+.bmap.click .m:hover{fill:#fff}
+.bmap .sel{fill:var(--red)}
+.cap{text-align:center;font-size:11px;color:var(--dim);margin-top:4px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mute);margin-top:10px;justify-content:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.steps li{list-style:none;display:flex;gap:12px;font-size:13px;line-height:1.5;color:#CFCAC1;margin-bottom:10px}
+.steps li span{flex:none;width:22px;height:22px;border-radius:50%;background:var(--s3);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--bone)}
+.warn{background:var(--redbg);border:1px solid rgba(229,72,77,.3);border-radius:14px;padding:12px;font-size:13px;line-height:1.5;color:#F3C9CA}
+.prescr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.prescr div{background:var(--s2);border-radius:14px;padding:10px;text-align:center}
+.prescr b{display:block;font-size:15px;margin-top:4px}
+.prescr small{font-size:10px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.thumb{width:62px;height:52px;border-radius:12px;background:#15161A;border:1px solid var(--line);flex:none;overflow:hidden}
+.thumb svg{width:100%;height:100%}
+.ex-row .t small b{color:var(--bone);font-weight:700}
+.day{margin-bottom:12px}
+.day-h{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--s1);border:1px solid var(--line);border-radius:16px 16px 0 0}
+.day-h b{font-size:15px}
+.day-h small{font-size:12px;color:var(--mute)}
+.day-b{border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px;padding:0 16px}
+.prof{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.prof .av{width:64px;height:64px;font-size:20px}
+.prof h3{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.prof p{font-size:13px;color:var(--mute);margin-top:2px}
+table.med{width:100%;border-collapse:collapse;font-size:13px}
+table.med td,table.med th{padding:9px 0;border-bottom:1px solid var(--line);text-align:right}
+table.med th{color:var(--dim);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+table.med td:first-child,table.med th:first-child{text-align:left;color:var(--mute)}
+table.med tr:last-child td{border-bottom:0}
+.up{color:var(--base)} .dn{color:var(--red2)}
+.note{font-size:13px;line-height:1.6;color:#CFCAC1}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:8;display:none;align-items:flex-end}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--s1);border-top:1px solid var(--line);border-radius:28px 28px 0 0;width:100%;padding:12px 20px 30px;animation:up .28s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheet .grab{width:40px;height:5px;border-radius:5px;background:var(--s3);margin:0 auto 16px}
+.sheet h4{font-size:19px;font-weight:800;margin-bottom:14px}
+.fld{margin-bottom:12px}
+.fld label{font-size:12px;color:var(--mute);display:block;margin-bottom:6px;font-weight:600}
+.fld input,.fld select{width:100%;height:48px;border-radius:14px;background:var(--s2);border:1px solid var(--line);color:var(--bone);padding:0 14px;font-size:15px;outline:0}
+.fld input:focus,.fld select:focus{border-color:var(--red)}
+.big-in{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:10px 0 18px}
+.big-in input{width:150px;background:none;border:0;border-bottom:2px solid var(--line);color:var(--bone);font-size:52px;font-weight:800;text-align:center;outline:0}
+.big-in span{font-size:20px;color:var(--mute);font-weight:700}
+.check{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.check.on{background:var(--red);border-color:var(--red)}
+.ring{position:relative;width:74px;height:74px;flex:none}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:800}
+.toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:var(--bone);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;font-weight:700;z-index:9;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+.seg2{display:flex;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg2 button{flex:1;height:34px;border-radius:9px;font-size:13px;font-weight:600;color:var(--mute)}
+.seg2 button.on{background:var(--s3);color:var(--bone)}
+html,body{min-height:100%}
+body{background:var(--bg)}
+#app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100svh;position:relative}
+@media(min-width:520px){#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+.view{flex:none;overflow:visible;padding:max(14px,env(safe-area-inset-top)) 18px 120px}
+.tabbar{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:456px;bottom:max(14px,env(safe-area-inset-bottom))}
+.sheet-bg{position:fixed;inset:0;display:none;justify-content:center;align-items:flex-end}
+.sheet-bg.on{display:flex}
+.sheet{max-width:480px;max-height:92vh;overflow-y:auto;padding-bottom:max(30px,env(safe-area-inset-bottom))}
+.toast{position:fixed;top:18px;left:50%;max-width:90vw;white-space:normal;text-align:center}
+.fld textarea{width:100%;min-height:80px;border-radius:14px;background:var(--s2);border:1px solid var(--line);color:var(--bone);padding:12px 14px;font:inherit;font-size:15px;outline:0;resize:vertical}
+.fld textarea:focus{border-color:var(--red)}
+.g3{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.auth{padding-top:34px}
+.logo{display:flex;align-items:center;gap:14px}
+.logo h1{font-size:34px;letter-spacing:.18em;font-weight:800}
+.tag{font-size:28px;margin:18px 0 24px;line-height:1.15}
+.tag em{color:var(--red)}
+.pw{position:relative}
+.pw button{position:absolute;right:6px;top:6px;height:36px;padding:0 10px;font-size:12px;font-weight:700;color:var(--mute)}
+.msg{font-size:13px;line-height:1.5;border-radius:12px;padding:10px 12px;margin-bottom:12px;display:none}
+.msg.on{display:block}
+.msg.err{background:var(--redbg);border:1px solid rgba(229,72,77,.3);color:#F3C9CA}
+.msg.ok{background:rgba(143,191,169,.12);border:1px solid rgba(143,191,169,.35);color:#CDE5D9}
+.lnk{font-size:13px;color:var(--mute);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.center{text-align:center}
+.btn[disabled]{opacity:.55;cursor:default}
+.btn.danger{background:#7A2A2D}
+.empty{text-align:center;padding:30px 18px}
+.empty h3{font-size:20px;margin:12px 0 6px}
+.empty p{font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:16px}
+.mini{height:34px;padding:0 12px;border-radius:10px;background:var(--s2);border:1px solid var(--line);font-size:12px;font-weight:700}
+.mini.red{color:var(--red2)}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--s3);border-top-color:var(--red);animation:sp .8s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.cin{width:84px;height:34px;border-radius:10px;background:var(--s2);border:1px solid var(--line);color:var(--bone);padding:0 8px;font:inherit;font-size:13px;text-align:center;outline:0}
+.cin:focus{border-color:var(--red)}
+.feel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.feel button{height:46px;border-radius:14px;border:1px solid var(--line);background:var(--s2);font-weight:700;font-size:14px;color:var(--mute)}
+.feel button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
+a.btn{text-decoration:none}
+.hist{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.hist:last-child{border-bottom:0}
+.hist small{color:var(--mute);display:block;margin-top:2px;line-height:1.4}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="view" id="view"></div>
+  <nav class="tabbar" id="tabbar" style="display:none"></nav>
+</div>
+<div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetIn"></div></div>
+<div class="toast" id="toast"></div>
+<script src="figura.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const LV={
+  base:{nome:'Base',sub:'Iniciante',cor:'var(--base)',hex:'#8FBFA9'},
+  forte:{nome:'Forte',sub:'Intermediário',cor:'var(--forte)',hex:'#8AA6D6'},
+  palco:{nome:'Palco',sub:'Atleta',cor:'var(--palco)',hex:'#D4B074'}
+};
+const EX={
+ agachamento:{nome:'Agachamento livre',grupo:'Pernas',equip:'Barra',prim:['quadriceps','gluteo'],sec:['posterior','lombar','abdomen'],hl:['thigh','glute'],hl2:['lower'],
+  kit:['plate'],A:{anchor:[112,186],sh:0,th:0,torso:180,ua:-40,fa:160,rel:1},B:{anchor:[112,186],sh:-30,th:85,torso:145,ua:-40,fa:160,rel:1},
+  passos:['Barra apoiada no trapézio, pés na largura dos ombros, pontas levemente para fora.','Desça levando o quadril para trás e para baixo, joelhos seguindo a linha dos pés.','Coxas paralelas ao chão (ou abaixo, se tiver mobilidade). Suba empurrando o chão.'],
+  erro:'Joelhos entrando para dentro na subida e calcanhar saindo do chão.',
+  pres:{base:'3 × 12',forte:'5 × 8',palco:'6 × 6–10'}},
+ supino:{nome:'Supino reto',grupo:'Peito',equip:'Barra + banco',prim:['peito'],sec:['triceps','ombro'],hl:['chest'],hl2:['ua','delt'],
+  kit:['bench','plate'],A:{hip:[150,128],th:80,sh:0,torso:-90,ua:180,fa:180,footA:90},B:{hip:[150,128],th:80,sh:0,torso:-90,ua:28,fa:180,footA:90},
+  passos:['Deitado, olhos abaixo da barra, escápulas encaixadas para trás e para baixo.','Desça a barra controlada até tocar o meio do peito, cotovelos a uns 45° do corpo.','Empurre para cima e um pouco para trás, travando os braços no topo.'],
+  erro:'Quicar a barra no peito e tirar o quadril do banco.',
+  pres:{base:'3 × 12',forte:'4 × 8–10',palco:'5 × 6–8 + drop'}},
+ rosca:{nome:'Rosca direta',grupo:'Braços',equip:'Halteres',prim:['biceps'],sec:['antebraco'],hl:['ua'],hl2:['fa'],
+  kit:['db'],A:{anchor:[118,186],sh:0,th:0,torso:180,ua:4,fa:6},B:{anchor:[118,186],sh:0,th:0,torso:180,ua:-6,fa:158},
+  passos:['Em pé, cotovelos colados ao corpo, palmas para frente.','Suba os halteres só dobrando o cotovelo, sem balançar o tronco.','Aperte no topo e desça devagar, em 2 a 3 segundos.'],
+  erro:'Jogar o corpo para trás para ajudar a subir o peso.',
+  pres:{base:'3 × 12',forte:'4 × 12',palco:'4 × 10 + bi-set'}},
+ terra:{nome:'Levantamento terra',grupo:'Costas',equip:'Barra',prim:['posterior','gluteo','lombar'],sec:['dorsal','trapezio','quadriceps'],hl:['glute','lower','thigh'],hl2:['back'],
+  kit:['plate'],A:{anchor:[112,186],sh:0,th:0,torso:180,ua:0,fa:0},B:{anchor:[112,186],sh:-25,th:65,torso:128,ua:-20,fa:-20},
+  passos:['Barra sobre o meio do pé, pegada logo fora das pernas.','Coluna neutra, peito aberto, puxe a folga da barra antes de subir.','Empurre o chão e leve o quadril à frente; a barra sobe raspando nas pernas.'],
+  erro:'Arredondar a lombar para pegar a barra no chão.',
+  pres:{base:'3 × 10 leve',forte:'4 × 6',palco:'5 × 5'}},
+ remada:{nome:'Remada curvada',grupo:'Costas',equip:'Barra',prim:['dorsal'],sec:['biceps','ombro','trapezio','lombar'],hl:['back'],hl2:['ua','delt'],
+  kit:['plate'],A:{anchor:[116,186],sh:-15,th:35,torso:112,ua:0,fa:0},B:{anchor:[116,186],sh:-15,th:35,torso:112,ua:-125,fa:10},
+  passos:['Tronco inclinado a uns 45°, joelhos levemente dobrados, coluna neutra.','Puxe a barra em direção ao umbigo levando os cotovelos para trás.','Junte as escápulas no topo e desça controlando.'],
+  erro:'Subir o tronco a cada repetição para "roubar" o movimento.',
+  pres:{base:'3 × 12',forte:'4 × 10',palco:'5 × 8 rest-pause'}},
+ desenvolvimento:{nome:'Desenvolvimento',grupo:'Ombros',equip:'Barra',prim:['ombro'],sec:['triceps','trapezio'],hl:['delt'],hl2:['ua'],
+  kit:['plate'],A:{anchor:[118,186],sh:0,th:0,torso:180,ua:25,fa:180},B:{anchor:[118,186],sh:0,th:0,torso:180,ua:176,fa:180},
+  passos:['Em pé, barra na altura do queixo, abdômen e glúteos contraídos.','Empurre a barra para cima, passando a cabeça para frente quando a barra passar.','Trave os braços no topo, sem arquear a lombar.'],
+  erro:'Inclinar o corpo para trás e transformar em supino inclinado.',
+  pres:{base:'3 × 12',forte:'4 × 10',palco:'5 × 8'}},
+ triceps:{nome:'Tríceps na polia',grupo:'Braços',equip:'Polia',prim:['triceps'],sec:['antebraco'],hl:['ua'],hl2:['fa'],
+  kit:['cable'],A:{anchor:[112,186],sh:0,th:0,torso:172,ua:-8,fa:140},B:{anchor:[112,186],sh:0,th:0,torso:172,ua:-8,fa:4},
+  passos:['De frente para a polia, cotovelos fixos ao lado do corpo.','Estique os braços até o fim, empurrando a barra para baixo.','Volte devagar até os antebraços passarem da horizontal.'],
+  erro:'Deixar os cotovelos abrirem e o ombro entrar no movimento.',
+  pres:{base:'3 × 12',forte:'4 × 12',palco:'4 × 12 + parcial'}},
+ afundo:{nome:'Afundo',grupo:'Pernas',equip:'Halteres',prim:['quadriceps','gluteo'],sec:['posterior','panturrilha'],hl:['thigh','glute'],hl2:['shin'],farHl:1,
+  kit:['db'],A:{anchor:[142,186],sh:-10,th:40,torso:180,ua:2,fa:2,th2:-35,sh2:-40,footA2:30},B:{anchor:[142,186],sh:-25,th:80,torso:176,ua:2,fa:2,th2:-10,sh2:-90,footA2:-10},
+  passos:['Um passo largo à frente, tronco reto, halteres ao lado do corpo.','Desça até o joelho de trás quase tocar o chão.','Suba empurrando com o calcanhar da perna da frente.'],
+  erro:'Passo curto demais, jogando o joelho da frente muito à frente do pé.',
+  pres:{base:'3 × 10 cada',forte:'4 × 10 cada',palco:'4 × 12 cada'}},
+ panturrilha:{nome:'Elevação de panturrilha',grupo:'Pernas',equip:'Peso livre',prim:['panturrilha'],sec:[],hl:['shin'],hl2:[],
+  kit:['db'],A:{anchor:[118,186],sh:0,th:0,torso:180,ua:2,fa:2,footA:90},B:{anchor:[118,175],sh:0,th:0,torso:180,ua:2,fa:2,footA:42},
+  passos:['Em pé, ponta dos pés apoiada, joelhos estendidos.','Suba o máximo que conseguir na ponta dos pés.','Segure 1 segundo no topo e desça alongando bem.'],
+  erro:'Fazer rápido e curto, sem descer até alongar.',
+  pres:{base:'3 × 15',forte:'5 × 15',palco:'6 × 12'}},
+ prancha:{nome:'Prancha',grupo:'Abdômen',equip:'Peso do corpo',prim:['abdomen'],sec:['obliquo','ombro','lombar'],hl:['abs'],hl2:['delt'],
+  kit:['mat'],A:{hip:[100,160],th:-80,sh:-80,torso:95,ua:0,fa:90,footA:0},B:{hip:[100,156],th:-81,sh:-81,torso:96,ua:0,fa:90,footA:0},
+  passos:['Antebraços no chão, cotovelos abaixo dos ombros.','Corpo em linha reta da cabeça ao calcanhar, glúteos contraídos.','Respire curto e segure sem deixar o quadril cair.'],
+  erro:'Quadril caindo e lombar afundando.',
+  pres:{base:'3 × 30 s',forte:'3 × 45 s',palco:'4 × 60 s'}}
+};
+
+const PROG={
+ base:{titulo:'Fundamentos',freq:'3x por semana',dur:'8 semanas',tempo:'45 min',desc:'Corpo inteiro, técnica antes de carga. Para quem nunca treinou ou está voltando.',
+  dias:[{n:'Treino A',f:'Corpo inteiro',ex:['agachamento','supino','remada','prancha']},{n:'Treino B',f:'Corpo inteiro',ex:['terra','desenvolvimento','afundo','panturrilha']}]},
+ forte:{titulo:'Hipertrofia ABC',freq:'5x por semana',dur:'12 semanas',tempo:'60 min',desc:'Divisão por grupos com carga progressiva. Para quem já treina há mais de 1 ano.',
+  dias:[{n:'Treino A',f:'Peito, ombro e tríceps',ex:['supino','desenvolvimento','triceps']},{n:'Treino B',f:'Costas e bíceps',ex:['terra','remada','rosca']},{n:'Treino C',f:'Pernas',ex:['agachamento','afundo','panturrilha']}]},
+ palco:{titulo:'Preparação de Palco',freq:'6x por semana',dur:'16 semanas até o campeonato',tempo:'75 min + cardio',desc:'Periodização em blocos, técnicas avançadas, poses e check-in de fotos. Para atletas e quem quer competir.',
+  dias:[{n:'Treino A',f:'Peito',ex:['supino']},{n:'Treino B',f:'Costas',ex:['terra','remada']},{n:'Treino C',f:'Pernas',ex:['agachamento','afundo','panturrilha']},{n:'Treino D',f:'Ombro e braços',ex:['desenvolvimento','rosca','triceps']},{n:'Treino E',f:'Core e poses',ex:['prancha']}]}
+};
+/* ================= MAPA DO CORPO ================= */
+const FRONT={
+ trapezio:'M104,56 C110,62 122,66 134,70 L112,73 C108,68 105,62 104,56Z',
+ ombro:'M136,70 C150,70 156,84 154,106 C147,101 140,97 133,93 C131,84 131,76 136,70Z',
+ peito:'M102,75 L131,75 C134,87 133,100 127,111 C117,117 107,116 102,112Z',
+ biceps:'M137,103 C149,108 152,130 148,150 C142,150 136,140 134,125 C134,115 134,108 137,103Z',
+ antebraco:'M146,155 C157,170 157,198 151,228 L142,228 C139,202 137,178 139,158Z',
+ abdomen:'M102,119h13v18h-13Z M102,140h13v18h-13Z M102,161h13v18h-13Z M102,182h13v20c-5,3-10,3-13,2Z',
+ obliquo:'M119,120 C127,130 129,160 127,194 L119,200 C121,172 121,142 119,120Z',
+ quadriceps:'M104,222 C118,214 133,220 135,236 C137,270 133,310 125,332 C117,334 110,332 106,326 C103,292 102,252 104,222Z',
+ panturrilha:'M108,348 C117,343 128,346 128,358 C128,382 124,402 120,416 L112,416 C108,392 106,368 108,348Z'
+};
+const BACK={
+ trapezio:'M100,50 L106,53 C110,62 122,66 136,72 C126,80 116,90 108,112 L100,124Z',
+ ombro:FRONT.ombro,
+ dorsal:'M112,104 C120,92 128,90 132,94 C136,114 132,146 120,176 L107,166 C108,142 109,120 112,104Z',
+ triceps:FRONT.biceps,
+ antebraco:FRONT.antebraco,
+ lombar:'M101,130 L106,127 C106,150 108,167 116,181 L116,200 L101,200Z',
+ gluteo:'M101,206 C120,198 137,208 137,232 C137,253 121,262 101,256Z',
+ posterior:'M104,264 C118,259 133,263 133,278 C133,302 127,322 121,338 L108,338 C104,312 103,288 104,264Z',
+ panturrilha:'M107,348 C122,342 133,357 131,378 C129,394 123,406 117,416 L110,416 C104,394 103,368 107,348Z'
+};
+const NOMEM={peito:'Peitoral',ombro:'Ombros',biceps:'Bíceps',triceps:'Tríceps',antebraco:'Antebraço',abdomen:'Abdômen',obliquo:'Oblíquos',quadriceps:'Quadríceps',panturrilha:'Panturrilha',trapezio:'Trapézio',dorsal:'Dorsais',lombar:'Lombar',gluteo:'Glúteos',posterior:'Posterior da coxa'};
+function bodyMap(side,prim=[],sec=[],click=false,sel=null){
+  const M=side==='f'?FRONT:BACK;
+  const base='';
+  const half=Object.entries(M).map(([k,d])=>{
+    const c=sel===k?'m sel':prim.includes(k)?'m p':sec.includes(k)?'m s':'m';
+    return`<path class="${c}" d="${d}" ${click?`onclick="pickMuscle('${k}')"`:''}><title>${NOMEM[k]}</title></path>`}).join('');
+  const static_=(side==='f'?'<path class="n" d="M100,205 L117,203 C112,214 106,219 100,221Z"/>':'')+`<ellipse class="n" cx="147" cy="241" rx="6" ry="10"/><ellipse class="n" cx="117" cy="341" rx="9" ry="6"/><ellipse class="n" cx="116" cy="424" rx="9" ry="5"/>`;
+  return`<svg class="bmap${click?' click':''}" viewBox="40 0 120 440"><circle class="n" cx="100" cy="29" r="18"/><rect class="n" x="93" y="44" width="14" height="14" rx="4"/>${base}
+   <g>${half}${static_}</g><g transform="translate(200 0) scale(-1 1)">${half}${static_}</g></svg>`;
+}
+
+/* ================= ÍCONES ================= */
+const I={
+ painel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
+ alunos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4 1.5 4.6 4"/></svg>',
+ treinos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>',
+ exerc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 9l-5 3M12 9l5-2M12 14l-3 7M12 14l4 6"/></svg>',
+ hoje:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.5 2 3 0-3 .5-6 1-8.5Z"/></svg>',
+ evol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg>',
+ chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
+ back:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
+ plus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
+ ok:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>'
+};
+/* ================= CONFIG ================= */
+const SB_URL='https://sndknlhczvhtqnuwmsvf.supabase.co';
+const SB_KEY='sb_publishable_HzaNu3pjTlS8C2GYcyxSUg_SF622iIN';
+const QS=new URLSearchParams(location.search);
+const FAKE=QS.get('fake');
+const URL_APP=location.origin+location.pathname;
+const HASHTYPE=(/[#&?]type=(invite|recovery|signup)/.exec(location.hash+'&'+location.search)||[])[1]||null;
+
+/* ================= UTIL ================= */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hoje=()=>iso(new Date());
+const dt=s=>{const [y,m,d]=String(s).slice(0,10).split('-').map(Number);return new Date(y,m-1,d)};
+const fmtD=s=>s?String(s).slice(0,10).split('-').reverse().join('/'):'';
+const fmtDC=s=>s?fmtD(s).slice(0,5):'';
+const fmtTs=s=>s?new Date(s).toLocaleDateString('pt-BR'):'';
+const diasEntre=(a,b)=>Math.round((dt(b)-dt(a))/864e5);
+const addDias=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
+const nf=(n,d=1)=>Number(n).toFixed(d).replace('.',',');
+const pnum=s=>{s=String(s==null?'':s).trim().replace(',','.');if(s==='')return null;const n=Number(s);return isFinite(n)?n:NaN};
+const f1=n=>n.toFixed(1);
+const ini=n=>String(n||'?').trim().split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase();
+const idade=n=>{if(!n)return null;const h=new Date(),b=dt(n);let a=h.getFullYear()-b.getFullYear();if(h.getMonth()<b.getMonth()||(h.getMonth()===b.getMonth()&&h.getDate()<b.getDate()))a--;return a};
+const dataLonga=()=>{const t=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});return t.charAt(0).toUpperCase()+t.slice(1)};
+const $=id=>document.getElementById(id);
+const val=id=>{const e=$(id);return e?e.value:''};
+
+function traduzErro(e){
+  const m=String((e&&(e.message||e.erro||e.error_description))||e||'');
+  const c=(e&&e.code)||'';
+  if(/Invalid login credentials/i.test(m))return 'E-mail ou senha incorretos.';
+  if(/Email not confirmed/i.test(m))return 'Você ainda não confirmou o e-mail. Abra a mensagem que enviamos e clique no link.';
+  if(/already (registered|been registered)|already exists|já (existe|cadastrad)/i.test(m)||c==='user_already_exists')return 'Este e-mail já está cadastrado. Tente entrar ou recuperar a senha.';
+  if(/weak|at least \d+ char|Password should/i.test(m)||c==='weak_password')return 'Senha fraca. Use pelo menos 8 caracteres.';
+  if(/rate limit|For security purposes|too many/i.test(m)||c==='over_email_send_rate_limit')return 'Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.';
+  if(/same password|different from the old/i.test(m))return 'A nova senha precisa ser diferente da atual.';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m))return 'Sem conexão com a internet. Confira e tente de novo.';
+  if(/Invalid email|valid email/i.test(m))return 'E-mail inválido.';
+  if(/[áéíóúãõç]/i.test(m)&&m.length<200)return m;
+  return 'Algo deu errado. Tente de novo em instantes.';
+}
+
+/* ================= CLIENTE ================= */
+let sb=null;
+if(FAKE){sb=makeFake(FAKE)}
+else if(window.supabase){sb=window.supabase.createClient(SB_URL,SB_KEY)}
+
+async function apiEmail(body){
+  if(FAKE)return fakeEmail(body);
+  const r=await fetch(SB_URL+'/functions/v1/apice-email',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:'Bearer '+SB_KEY},body:JSON.stringify(Object.assign({redirect_to:URL_APP},body))});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok||j.erro)throw {message:j.erro||(r.status===409?'Este e-mail já está cadastrado.':'Não foi possível enviar agora.'),status:r.status};
+  return j;
+}
+const Q=async p=>{const r=await p;if(r.error)throw r.error;return r.data};
+
+/* ================= ESTADO ================= */
+const S={screen:'loading',user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
+  dia:null,feitos:{},feel:'ok',recovery:false,pwdDone:false,boot:false,carregando:false,aviso:''};
+const eP=()=>S.perfil&&S.perfil.papel==='personal';
+const TABS={personal:[['painel','Painel'],['alunos','Alunos'],['treinos','Treinos'],['exerc','Exercícios']],
+            aluno:[['hoje','Hoje'],['evol','Evolução'],['exerc','Exercícios']]};
+const aluno=id=>S.alunos.find(a=>a.id===id);
+const badge=n=>LV[n]?`<span class="badge" style="color:${LV[n].hex};background:${LV[n].hex}1f">${LV[n].nome.toUpperCase()}</span>`:'';
+
+/* ================= DADOS DERIVADOS ================= */
+const regsDe=id=>S.regs[id]||[];
+const trsDe=id=>S.trs[id]||[];
+const comPeso=id=>regsDe(id).filter(r=>r.peso!=null);
+function ultimoCom(id,campo){const l=regsDe(id).filter(r=>r[campo]!=null);return l[l.length-1]||null}
+function sortRegs(id){S.regs[id].sort((a,b)=>String(a.data).localeCompare(String(b.data))||String(a.criado||'').localeCompare(String(b.criado||'')))}
+function sortTrs(id){S.trs[id].sort((a,b)=>String(b.data).localeCompare(String(a.data))||String(b.criado||'').localeCompare(String(a.criado||'')))}
+function medidasResumo(id){
+  const out=[];
+  for(const [k,n] of [['cintura','Cintura'],['quadril','Quadril'],['braco','Braço'],['coxa','Coxa'],['peito','Peito']]){
+    const l=regsDe(id).filter(r=>r.medidas&&r.medidas[k]!=null);
+    if(l.length)out.push({k,n,i:Number(l[0].medidas[k]),f:Number(l[l.length-1].medidas[k])});
+  }
+  return out;
+}
+function sequencia(id){
+  const set=new Set(trsDe(id).map(t=>String(t.data).slice(0,10)));
+  let d=hoje();if(!set.has(d))d=addDias(d,-1);
+  let n=0;while(set.has(d)){n++;d=addDias(d,-1)}
+  return n;
+}
+
+/* ================= SHEET / TOAST ================= */
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),2400)}
+function openSheet(h){$('sheetIn').innerHTML='<div class="grab"></div>'+h;$('sheet').classList.add('on')}
+function closeSheet(){$('sheet').classList.remove('on')}
+function confirmar(titulo,texto,rotulo,fn){
+  S.cf=fn;
+  openSheet(`<h4>${esc(titulo)}</h4><p style="font-size:14px;color:var(--mute);line-height:1.5;margin-bottom:16px">${esc(texto)}</p>
+  <button class="btn danger" id="cf-ok" onclick="execCf()">${esc(rotulo)}</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancelar</button>`);
+}
+async function execCf(){const b=$('cf-ok');if(b){b.disabled=true;b.textContent='Aguarde…'}try{await S.cf()}catch(e){closeSheet();toast(traduzErro(e))}}
+function busy(id,on,txt){const b=$(id);if(!b)return;if(on){b.dataset.t=b.textContent;b.disabled=true;b.textContent=txt||'Aguarde…'}else{b.disabled=false;if(b.dataset.t)b.textContent=b.dataset.t}}
+function msg(t,kind){const e=$('msg');if(!e)return;e.textContent=t||'';e.className='msg '+(kind||'err')+(t?' on':'')}
+
+/* ================= FIGURA ================= */
+function stageSVG(id,ex,static_){
+  const vb=APICE_FIG.viewBox.split(/[\s,]+/).map(Number);
+  return`<svg viewBox="${APICE_FIG.viewBox}" ${static_?'':`data-anim="${esc(id)}"`}><line x1="${vb[0]}" y1="${APICE_FIG.ground}" x2="${vb[0]+vb[2]}" y2="${APICE_FIG.ground}" stroke="#2C2F36" stroke-width="1.5"/><g>${APICE_FIG.draw(ex,static_?ex.B:ex.A)}</g></svg>`;
+}
+let SPEED=1,PLAY=true,tAcc=0,lastT=performance.now();
+function loop(now){
+  const d=now-lastT;lastT=now;if(PLAY)tAcc+=d*SPEED;
+  document.querySelectorAll('[data-anim]').forEach(svg=>{
+    const ex=EX[svg.dataset.anim];if(!ex)return;
+    const ph=(tAcc/2600)%1;let t=ph<.5?ph*2:2-ph*2;t=t*t*(3-2*t);
+    svg.querySelector('g').innerHTML=APICE_FIG.draw(ex,APICE_FIG.mix(ex.A,ex.B,t));
+  });
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+function pickMuscle(k){S.muscle=S.muscle===k?null:k;render()}
+
+/* ================= GRÁFICO ================= */
+function chart(a){
+  let ps=comPeso(a.id).map(r=>({v:Number(r.peso),d:String(r.data).slice(0,10)}));
+  if(S.periodo==='4s'){const lim=addDias(hoje(),-28);ps=ps.filter(p=>p.d>=lim)}
+  if(!ps.length)return'<p style="font-size:13px;color:var(--mute);padding:14px 0">Nenhuma pesagem neste período.</p>';
+  const meta=a.meta_peso!=null?Number(a.meta_peso):null;
+  const W=330,H=170,pl=14,pr=34,pt=18,pb=24;
+  const all=ps.map(p=>p.v).concat(meta!=null?[meta]:[]);
+  let mn=Math.min(...all)-1,mx=Math.max(...all)+1;
+  const X=i=>pl+(ps.length===1?0.5:i/(ps.length-1))*(W-pl-pr),Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
+  const pts=ps.map((p,i)=>[X(i),Y(p.v)]);
+  const d=pts.map((p,i)=>(i?'L':'M')+f1(p[0])+','+f1(p[1])).join(' ');
+  const area=d+` L${f1(pts[pts.length-1][0])},${H-pb} L${f1(pts[0][0])},${H-pb}Z`;
+  const lp=pts[pts.length-1];
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><defs><linearGradient id="gg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E5484D" stop-opacity=".28"/><stop offset="1" stop-color="#E5484D" stop-opacity="0"/></linearGradient></defs>`;
+  if(meta!=null)s+=`<line x1="${pl}" x2="${W-pr}" y1="${f1(Y(meta))}" y2="${f1(Y(meta))}" stroke="#D4B074" stroke-dasharray="4 4" stroke-width="1.2"/><text x="${W-pr+4}" y="${f1(Y(meta)+4)}" fill="#D4B074" font-size="10" font-weight="700">meta</text>`;
+  s+=`<path d="${area}" fill="url(#gg)"/><path d="${d}" fill="none" stroke="#E5484D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p,i)=>{const last=i===pts.length-1;s+=`<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="${last?5:3}" fill="${last?'#E5484D':'#141519'}" stroke="#E5484D" stroke-width="2"/>`;
+    if(ps.length<=8||i%Math.ceil(ps.length/8)===0||last)s+=`<text x="${f1(p[0])}" y="${H-6}" fill="#6B675F" font-size="9" text-anchor="middle">${fmtDC(ps[i].d)}</text>`});
+  s+=`<text x="${f1(lp[0])}" y="${f1(lp[1]-11)}" fill="#EDE8DF" font-size="11" font-weight="800" text-anchor="middle">${nf(ps[ps.length-1].v)}</text></svg>`;
+  return s;
+}
+/* ================= MOCK (só com ?fake=) ================= */
+function fakeEmail(b){
+  return new Promise((res,rej)=>setTimeout(()=>{
+    if(b.acao==='cadastro'&&/existe@/.test(b.email))return rej({message:'Este e-mail já está cadastrado.',status:409});
+    res({ok:true});
+  },200));
+}
+function fakeGo(){
+  const g=QS.get('go');if(!g)return;
+  const [t,a,b]=g.split(':');
+  if(t==='tab')setTab(a);
+  else if(t==='aluno'){S.tab='alunos';S.stack=[{type:'aluno',id:a}];render()}
+  else if(t==='ex'){S.stack=[{type:'ex',k:a,n:'forte'}];render()}
+  else if(t==='aval'){S.tab='alunos';S.stack=[{type:'aluno',id:a}];render();avalSheet(a)}
+  else if(t==='feito'){S.feitos={supino:{feito:true,carga:'82,5 kg'},desenvolvimento:{feito:true,carga:'40 kg'}};render()}
+  else if(t==='feedback'){S.feitos={supino:{feito:true,carga:'82 kg'}};render();feedbackSheet()}
+  else if(t==='aluno-sheet'){alunoSheet(a||null)}
+  else if(t==='vazio'){}
+  else if(t==='teste2'){(async()=>{render();S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();setFeel('pesado');$('fb-tx').value='cansei';await salvarTreino();const a=S.alunos[0];render();document.title='T2 treinos='+S.trs[a.id].length+' primeiro='+S.trs[a.id][0].data+' '+S.trs[a.id][0].treino+' fb='+S.trs[a.id][0].feedback+' seq='+sequencia(a.id)+' proxDia='+S.dia})()}
+  else if(t==='teste'){(async()=>{const L=[];
+    S.dia=0;S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();$('fb-tx').value='ok <b>x</b>';await salvarTreino();
+    L.push('treinos='+S.trs.a1.length+' ultimo='+S.trs.a1[0].treino+' fb='+S.trs.a1[0].feedback+' prox='+(S.dia));
+    avalSheet('a1');$('av-peso').value='82,0';$('av-cintura').value='83,5';$('av-obs').value='<i>teste</i>';await salvarAval('a1','');
+    L.push('regs='+S.regs.a1.length+' ultimoPeso='+S.regs.a1[S.regs.a1.length-1].peso);
+    avalSheet('a1');$('av-peso').value='abc';await salvarAval('a1','');L.push('erroNum='+$('msg').textContent);
+    S.tab='alunos';S.stack=[{type:'aluno',id:'a2'}];render();await convidar('a2');L.push('convite='+aluno('a2').convidado_em.slice(0,4)+' toast='+$('toast').textContent);
+    S.stack=[{type:'aluno',id:'a1'}];render();const h=$('view').innerHTML;L.push('xss_ok='+(!h.includes('<i>teste</i>')&&h.includes('&lt;i&gt;teste')));
+    document.title='TESTE '+L.join(' | ');})()}
+  if(QS.get('scroll'))setTimeout(()=>window.scrollTo(0,Number(QS.get('scroll'))),300);
+}
+function makeFake(kind){
+  const H=hoje(),ago=n=>addDias(H,-n);let seq=100;
+  const P={id:'p1',email:'brenno@exemplo.com'},U={id:'u1',email:'lucas@exemplo.com'};
+  let cur=kind==='personal'||kind==='vazio'?P:kind==='aluno'?U:null;
+  const db={
+   apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
+   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[]};
+  if(kind!=='vazio'){
+   db.apice_alunos=[
+    {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
+    {id:'a2',personal_id:'p1',user_id:null,nome:'Ana Ribeiro',email:'ana@exemplo.com',telefone:'(11) 97777-1111',nascimento:'1997-09-03',altura:1.64,sexo:'feminino',nivel:'base',objetivo:'Emagrecimento',meta_peso:65,nota:null,ativo:true,convidado_em:new Date(Date.now()-3*864e5).toISOString()},
+    {id:'a3',personal_id:'p1',user_id:null,nome:'Rafael Costa',email:null,telefone:null,nascimento:'1999-01-20',altura:1.80,sexo:'masculino',nivel:'palco',objetivo:'Campeonato',meta_peso:84,nota:'Check-in de fotos todo domingo.',ativo:true,convidado_em:null}];
+   [[49,78.0,18.2],[42,78.6],[35,79.1,17.6],[28,79.5],[21,80.2,17.2],[14,80.6],[7,81.0,16.9],[1,81.4,16.7]].forEach(([d,p,g],i)=>db.apice_registros.push({id:'r'+i,aluno_id:'a1',data:ago(d),peso:p,gordura:g==null?null:g,medidas:{cintura:84-i*.2,braco:36.5+i*.25,coxa:57+i*.3,peito:101+i*.5},obs:i===7?'Boa evolução no braço.':null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
+   [[60,72.4],[30,70.2],[3,68.6]].forEach(([d,p],i)=>db.apice_registros.push({id:'s'+i,aluno_id:'a2',data:ago(d),peso:p,gordura:null,medidas:{cintura:82-i*2},obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
+   [[44,92.0],[40,86.3]].forEach(([d,p],i)=>db.apice_registros.push({id:'t'+i,aluno_id:'a3',data:ago(d),peso:p,gordura:11.8-i,medidas:null,obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
+   [[3,'Treino A'],[2,'Treino B'],[1,'Treino C']].forEach(([d,n],i)=>db.apice_treinos_feitos.push({id:'f'+i,aluno_id:'a1',data:ago(d),treino:n,exercicios:[{chave:'supino',feito:true,carga:'80 kg'},{chave:'terra',feito:true,carga:'110 kg'},{chave:'agachamento',feito:i!==0,carga:'100 kg'}],feedback:i===2?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z'}));
+  }
+  const vis=(t,r)=>{
+    const ids=db.apice_alunos.filter(a=>cur&&(a.personal_id===cur.id||a.user_id===cur.id)).map(a=>a.id);
+    if(t==='apice_alunos')return ids.includes(r.id);
+    if(t==='apice_perfis')return cur&&r.id===cur.id;
+    return ids.includes(r.aluno_id);
+  };
+  class QB{
+    constructor(t){this.t=t;this.op='select';this.f=[];this.o=null;this.one=null;this.pay=null}
+    select(){return this} insert(p){this.op='insert';this.pay=p;return this} update(p){this.op='update';this.pay=p;return this} delete(){this.op='delete';return this}
+    eq(c,v){this.f.push([c,v]);return this} order(c,o){this.o=[c,!(o&&o.ascending===false)];return this} limit(){return this}
+    single(){this.one='single';return this} maybeSingle(){this.one='maybe';return this}
+    then(a,b){return this.run().then(a,b)}
+    async run(){
+      await new Promise(r=>setTimeout(r,120));
+      const rows=db[this.t];let out;
+      const match=r=>vis(this.t,r)&&this.f.every(([c,v])=>r[c]===v);
+      if(this.op==='insert'){const n=Object.assign({id:'n'+(++seq),criado:new Date().toISOString()},this.pay);rows.push(n);out=[n]}
+      else if(this.op==='update'){out=rows.filter(match);out.forEach(r=>Object.assign(r,this.pay))}
+      else if(this.op==='delete'){out=rows.filter(match);out.forEach(r=>rows.splice(rows.indexOf(r),1))}
+      else{out=rows.filter(match);if(this.o){const [c,asc]=this.o;out=out.slice().sort((x,y)=>(String(x[c])<String(y[c])?-1:String(x[c])>String(y[c])?1:0)*(asc?1:-1))}}
+      out=out.map(r=>JSON.parse(JSON.stringify(r)));
+      if(this.one==='single'){if(!out.length)return{data:null,error:{message:'Registro não encontrado'}};return{data:out[0],error:null}}
+      if(this.one==='maybe')return{data:out[0]||null,error:null};
+      return{data:out,error:null};
+    }
+  }
+  const subs=[];const sess=()=>cur?{user:cur,access_token:'x'}:null;
+  const emit=(ev)=>subs.forEach(f=>f(ev,sess()));
+  return{
+   auth:{
+    getSession:async()=>({data:{session:sess()},error:null}),
+    onAuthStateChange(cb){subs.push(cb);setTimeout(()=>cb('INITIAL_SESSION',sess()),50);return{data:{subscription:{unsubscribe(){}}}}},
+    async signInWithPassword({email,password}){await new Promise(r=>setTimeout(r,200));
+      if(password==='errada')return{data:null,error:{message:'Invalid login credentials'}};
+      cur=/lucas/.test(email)?U:P;emit('SIGNED_IN');return{data:{session:sess()},error:null}},
+    async signOut(){cur=null;emit('SIGNED_OUT');return{error:null}},
+    async updateUser(){return{data:{user:cur},error:null}}
+   },
+   from:t=>new QB(t),
+   functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
+     if(a.user_id)return{data:{ok:true,situacao:'ja_tem_acesso'},error:null};a.convidado_em=new Date().toISOString();return{data:{ok:true,situacao:'convite_enviado'},error:null}}}
+  };
+}
+/* ================= AUTENTICAÇÃO ================= */
+const LOGO=`<div class="logo"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><rect width="56" height="56" rx="16" fill="#141519" stroke="#2C2F36"/><path d="M14 42 L28 13 L42 42" fill="none" stroke="#EDE8DF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="32" x2="44" y2="32" stroke="#E5484D" stroke-width="3.5" stroke-linecap="round"/><rect x="9" y="27.5" width="4" height="9" rx="1.5" fill="#E5484D"/><rect x="43" y="27.5" width="4" height="9" rx="1.5" fill="#E5484D"/></svg><h1>ÁPICE</h1></div><p class="tag">Do primeiro treino <em class="serif">ao palco.</em></p>`;
+const pwField=(id,label,ph)=>`<div class="fld"><label>${label}</label><div class="pw"><input id="${id}" type="password" autocomplete="${id==='f-senha'?'current-password':'new-password'}" placeholder="${ph||''}"><button type="button" onclick="verSenha('${id}',this)">Mostrar</button></div></div>`;
+function verSenha(id,b){const i=$(id);const m=i.type==='password';i.type=m?'text':'password';b.textContent=m?'Ocultar':'Mostrar'}
+function irAuth(s){S.screen=s;render()}
+
+function authHTML(){
+  const sc=S.screen;
+  if(sc==='loading')return`<div class="auth center" style="padding-top:140px"><div class="spin"></div><p style="color:var(--mute);font-size:13px;margin-top:14px">Carregando…</p></div>`;
+  if(sc==='login')return`<div class="auth">${LOGO}
+   <form onsubmit="return doLogin(event)" novalidate>
+    <div class="fld"><label>E-mail</label><input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>
+    ${pwField('f-senha','Senha','Sua senha')}
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="bt" type="submit">Entrar</button>
+   </form>
+   <div class="center" style="margin-top:14px;display:flex;flex-direction:column;gap:2px"><button class="lnk" onclick="irAuth('forgot')">Esqueci a senha</button><button class="lnk" onclick="irAuth('signup')">Criar conta de personal</button></div></div>`;
+  if(sc==='signup')return`<div class="auth">${LOGO}<h2 style="font-size:20px;margin-bottom:14px">Criar conta de personal</h2>
+   <form onsubmit="return doSignup(event)" novalidate>
+    <div class="fld"><label>Seu nome</label><input id="f-nome" autocomplete="name" placeholder="Nome e sobrenome"></div>
+    <div class="fld"><label>E-mail</label><input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>
+    ${pwField('f-pw1','Senha (mínimo 8 caracteres)','Crie uma senha')}
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="bt" type="submit">Criar conta</button>
+   </form>
+   <div class="center" style="margin-top:14px"><button class="lnk" onclick="irAuth('login')">Já tenho conta. Entrar</button></div></div>`;
+  if(sc==='signupDone')return`<div class="auth">${LOGO}<div class="card"><h3 style="font-size:19px;margin-bottom:8px">Confira seu e-mail</h3><p class="note">Enviamos um link para <b>${esc(S.aviso)}</b>. Clique nele para confirmar a conta e entrar no Ápice. Se não achar, olhe a caixa de spam.</p></div><button class="btn ghost" onclick="irAuth('login')">Voltar para o login</button></div>`;
+  if(sc==='forgot')return`<div class="auth">${LOGO}<h2 style="font-size:20px;margin-bottom:6px">Esqueci a senha</h2><p style="font-size:13px;color:var(--mute);margin-bottom:14px;line-height:1.5">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
+   <form onsubmit="return doForgot(event)" novalidate>
+    <div class="fld"><label>E-mail</label><input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="bt" type="submit">Enviar link</button>
+   </form>
+   <div class="center" style="margin-top:14px"><button class="lnk" onclick="irAuth('login')">Voltar para o login</button></div></div>`;
+  if(sc==='forgotDone')return`<div class="auth">${LOGO}<div class="card"><h3 style="font-size:19px;margin-bottom:8px">Enviamos um link para seu e-mail</h3><p class="note">Se <b>${esc(S.aviso)}</b> estiver cadastrado, você receberá um link para criar uma nova senha em instantes.</p></div><button class="btn ghost" onclick="irAuth('login')">Voltar para o login</button></div>`;
+  if(sc==='newpass')return`<div class="auth">${LOGO}<h2 style="font-size:20px;margin-bottom:6px">Definir nova senha</h2><p style="font-size:13px;color:var(--mute);margin-bottom:14px;line-height:1.5">Crie uma senha com pelo menos 8 caracteres para acessar o Ápice.</p>
+   <form onsubmit="return doNewPass(event)" novalidate>
+    ${pwField('f-pw1','Nova senha','Mínimo 8 caracteres')}
+    ${pwField('f-pw2','Repita a senha','Repita a senha')}
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="bt" type="submit">Salvar senha e entrar</button>
+   </form></div>`;
+  if(sc==='notApice')return`<div class="auth">${LOGO}<div class="card"><h3 style="font-size:19px;margin-bottom:8px">Esta conta não é do Ápice</h3><p class="note">Você entrou como <b>${esc(S.user&&S.user.email)}</b>, mas esse e-mail não tem acesso ao Ápice. Saia e entre com outra conta.</p></div><button class="btn" onclick="sair()">Sair</button></div>`;
+  if(sc==='erro')return`<div class="auth">${LOGO}<div class="card"><h3 style="font-size:19px;margin-bottom:8px">Não foi possível carregar</h3><p class="note">${esc(S.aviso||'Verifique sua conexão e tente de novo.')}</p></div><button class="btn" onclick="recarregar()">Tentar de novo</button><button class="btn ghost" style="margin-top:8px" onclick="sair()">Sair</button></div>`;
+  return'';
+}
+async function doLogin(e){
+  e.preventDefault();const em=val('f-email').trim(),pw=val('f-senha');
+  if(!em||!pw){msg('Informe e-mail e senha.');return false}
+  msg('');busy('bt',true,'Entrando…');
+  try{const {error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error}
+  catch(x){msg(traduzErro(x));busy('bt',false)}
+  return false;
+}
+async function doSignup(e){
+  e.preventDefault();const nome=val('f-nome').trim(),em=val('f-email').trim(),pw=val('f-pw1');
+  if(nome.length<2){msg('Informe seu nome.');return false}
+  if(!/^\S+@\S+\.\S+$/.test(em)){msg('Informe um e-mail válido.');return false}
+  if(pw.length<8){msg('A senha precisa ter pelo menos 8 caracteres.');return false}
+  msg('');busy('bt',true,'Criando…');
+  try{await apiEmail({acao:'cadastro',nome,email:em,senha:pw});S.aviso=em;irAuth('signupDone')}
+  catch(x){msg(traduzErro(x));busy('bt',false)}
+  return false;
+}
+async function doForgot(e){
+  e.preventDefault();const em=val('f-email').trim();
+  if(!/^\S+@\S+\.\S+$/.test(em)){msg('Informe um e-mail válido.');return false}
+  msg('');busy('bt',true,'Enviando…');
+  try{await apiEmail({acao:'recuperar',email:em});S.aviso=em;irAuth('forgotDone')}
+  catch(x){msg(traduzErro(x));busy('bt',false)}
+  return false;
+}
+async function doNewPass(e){
+  e.preventDefault();const a=val('f-pw1'),b=val('f-pw2');
+  if(a.length<8){msg('A senha precisa ter pelo menos 8 caracteres.');return false}
+  if(a!==b){msg('As senhas não são iguais.');return false}
+  msg('');busy('bt',true,'Salvando…');
+  try{const {error}=await sb.auth.updateUser({password:a});if(error)throw error;
+    S.pwdDone=true;S.recovery=false;try{history.replaceState(null,'',location.pathname)}catch(_){}
+    await carregarTudo();toast('Senha definida. Bem-vindo ao Ápice!')}
+  catch(x){msg(traduzErro(x));busy('bt',false)}
+  return false;
+}
+async function sair(){
+  try{await sb.auth.signOut()}catch(e){}
+  resetEstado();S.screen='login';render();
+}
+function resetEstado(){Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],dia:null,feitos:{},recovery:false,pwdDone:false});closeSheet()}
+
+/* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
+function iniciar(){
+  if(!sb){S.screen='erro';S.aviso='Não foi possível carregar a biblioteca. Verifique sua conexão.';render();return}
+  sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>onAuth(ev,ses),0)});
+  setTimeout(async()=>{
+    if(S.boot)return;
+    try{const {data}=await sb.auth.getSession();if(!S.boot)onAuth('INITIAL_SESSION',data&&data.session)}catch(e){if(!S.boot){S.screen='login';render()}}
+  },1500);
+}
+async function onAuth(ev,ses){
+  if(ev==='PASSWORD_RECOVERY')S.recovery=true;
+  if(!ses){
+    if(ev==='INITIAL_SESSION'&&HASHTYPE&&!S.boot&&!S.hashWait){S.hashWait=true;setTimeout(()=>{if(!S.user){S.boot=true;S.screen='login';render()}},4000);return}
+    S.boot=true;
+    if(ev==='SIGNED_OUT'||!S.user){S.user=null;if(FAKE&&QS.get('tela')&&!S.telaOk){S.telaOk=1;S.screen=QS.get('tela')}else if(!['signup','signupDone','forgot','forgotDone'].includes(S.screen)){S.screen='login'}render()}
+    return;
+  }
+  S.boot=true;
+  const mesmo=S.user&&S.user.id===ses.user.id;
+  S.user=ses.user;
+  if(mesmo&&S.screen==='app')return;
+  if(S.screen==='newpass')return;
+  if((S.recovery||HASHTYPE==='invite'||HASHTYPE==='recovery')&&!S.pwdDone){S.screen='newpass';render();return}
+  await carregarTudo();
+  if(HASHTYPE==='signup'&&S.screen==='app'){try{history.replaceState(null,'',location.pathname)}catch(_){}toast('Conta confirmada!')}
+}
+function recarregar(){carregarTudo()}
+async function carregarTudo(){
+  if(S.carregando)return;S.carregando=true;
+  S.screen='loading';render();
+  try{
+    const p=await Q(sb.from('apice_perfis').select('*').eq('id',S.user.id).maybeSingle());
+    if(!p){S.perfil=null;S.screen='notApice';render();return}
+    S.perfil=p;
+    S.alunos=await Q(sb.from('apice_alunos').select('*').order('nome'));
+    const rg=await Q(sb.from('apice_registros').select('*').order('data'));
+    const tr=await Q(sb.from('apice_treinos_feitos').select('*').order('data',{ascending:false}));
+    S.regs={};S.trs={};S.alunos.forEach(a=>{S.regs[a.id]=[];S.trs[a.id]=[]});
+    rg.forEach(r=>{(S.regs[r.aluno_id]=S.regs[r.aluno_id]||[]).push(r)});
+    tr.forEach(r=>{(S.trs[r.aluno_id]=S.trs[r.aluno_id]||[]).push(r)});
+    S.tab=TABS[p.papel==='personal'?'personal':'aluno'][0][0];S.stack=[];S.dia=null;S.feitos={};
+    S.screen='app';render();
+    if(FAKE)fakeGo();
+  }catch(e){S.screen='erro';S.aviso=traduzErro(e);render()}
+  finally{S.carregando=false}
+}
+/* ================= NAVEGAÇÃO ================= */
+function papel(){return eP()?'personal':'aluno'}
+function setTab(t){S.tab=t;S.stack=[];render()}
+function go(v){S.stack.push(v);render()}
+function back(){S.stack.pop();render()}
+function render(){
+  const app=$('view'),tb=$('tabbar');
+  if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
+  const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
+  app.innerHTML=(V[v.type]||V.vazio)(v);window.scrollTo(0,0);
+  tb.style.display='';
+  tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
+}
+const avBtn=()=>`<button class="av" onclick="perfilSheet()" aria-label="Perfil">${esc(ini(S.perfil&&S.perfil.nome))}</button>`;
+function perfilSheet(){
+  openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
+  <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
+}
+const primeiro=n=>esc(String(n||'').trim().split(/\s+/)[0]);
+const V={};
+V.vazio=()=>'<p>Tela não encontrada.</p>';
+
+/* ---- personal: painel ---- */
+function atencao(){
+  const L=[],h=hoje();
+  S.alunos.filter(a=>a.ativo!==false).forEach(a=>{
+    if(a.user_id){
+      const t=trsDe(a.id)[0];
+      if(!t)L.push({c:'var(--red)',id:a.id,t:`<b>${esc(a.nome)}</b> ainda não registrou nenhum treino`,s:'Usa o app mas não treinou pelo app. Mande uma mensagem.'});
+      else{const d=diasEntre(String(t.data).slice(0,10),h);if(d>=5)L.push({c:'var(--red)',id:a.id,t:`<b>${esc(a.nome)}</b> sem treino registrado há ${d} dias`,s:`Último treino em ${fmtD(t.data)}. Enviar mensagem?`})}
+    }
+    const r=regsDe(a.id);const u=r[r.length-1];
+    if(!u)L.push({c:'var(--forte)',id:a.id,t:`<b>${esc(a.nome)}</b> sem avaliação ainda`,s:'Registre a primeira avaliação (peso e medidas).'});
+    else{const d=diasEntre(String(u.data).slice(0,10),h);if(d>=30)L.push({c:'var(--forte)',id:a.id,t:`<b>${esc(a.nome)}</b> sem avaliação há ${d} dias`,s:`Última em ${fmtD(u.data)}. Hora de reavaliar.`})}
+    if(a.convidado_em&&!a.user_id)L.push({c:'var(--palco)',id:a.id,t:`<b>${esc(a.nome)}</b>: convite pendente`,s:`Enviado em ${fmtTs(a.convidado_em)}. Ainda não acessou o app.`});
+  });
+  return L;
+}
+V.painel=()=>{
+  const lim30=addDias(hoje(),-30),lim7=addDias(hoje(),-7);
+  let av30=0,tr7=0;
+  S.alunos.forEach(a=>{av30+=regsDe(a.id).filter(r=>String(r.data).slice(0,10)>=lim30).length;tr7+=trsDe(a.id).filter(t=>String(t.data).slice(0,10)>=lim7).length});
+  const ativos=S.alunos.filter(a=>a.ativo!==false).length;
+  const head=`<div class="hd"><div><p>${esc(dataLonga())}</p><h2>Olá, ${primeiro(S.perfil.nome)}</h2></div>${avBtn()}</div>`;
+  if(!S.alunos.length)return head+`<div class="card empty"><svg width="56" height="56" viewBox="0 0 56 56"><path d="M12 42 L28 12 L44 42" fill="none" stroke="#EDE8DF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="32" x2="46" y2="32" stroke="#E5484D" stroke-width="3.5" stroke-linecap="round"/></svg>
+   <h3>Cadastre seu primeiro aluno</h3><p>Adicione o aluno, registre peso e medidas e envie o convite para ele acompanhar os treinos pelo app.</p><button class="btn" onclick="novoAluno()">${I.plus} Novo aluno</button></div>`;
+  const at=atencao();
+  return head+`<div class="grid2">
+   <div class="kpi"><small>Alunos ativos</small><b>${ativos}</b><span style="color:var(--mute)">${S.alunos.length} cadastrados</span></div>
+   <div class="kpi"><small>Avaliações (30 dias)</small><b>${av30}</b><span style="color:var(--mute)">registros de peso e medidas</span></div>
+   <div class="kpi" style="grid-column:span 2"><small>Treinos registrados pelos alunos (7 dias)</small><b>${tr7}</b><span style="color:var(--mute)">feitos pelo app</span></div></div>
+  <div class="lbl">Precisa de atenção</div>
+  ${at.length?at.map(x=>`<div class="alert" onclick="go({type:'aluno',id:'${esc(x.id)}'})"><i style="background:${x.c}"></i><div>${x.t}<small>${x.s}</small></div></div>`).join(''):'<div class="alert"><i style="background:var(--base)"></i><div><b>Tudo em dia</b><small>Nenhum aluno precisa de atenção agora.</small></div></div>'}
+  <button class="btn" style="margin-top:14px" onclick="novoAluno()">${I.plus} Novo aluno</button>`;
+};
+
+/* ---- personal: alunos ---- */
+function filtrados(){const b=S.busca.toLowerCase();return S.alunos.filter(a=>(S.filtroNivel==='todos'||a.nivel===S.filtroNivel)&&String(a.nome).toLowerCase().includes(b))}
+function listaAlunos(){
+  const l=filtrados();
+  if(!l.length)return'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum aluno encontrado.</p>';
+  return l.map(a=>{
+    const pr=comPeso(a.id),p=pr.length?Number(pr[pr.length-1].peso):null,d=pr.length>1?p-Number(pr[0].peso):null;
+    const st=a.user_id?'usa o app':a.convidado_em?'convite enviado':'sem acesso';
+    return`<div class="row" onclick="go({type:'aluno',id:'${esc(a.id)}'})"><div class="av" style="border-color:${(LV[a.nivel]||LV.base).hex}66">${esc(ini(a.nome))}</div>
+    <div class="t"><b>${esc(a.nome)}${a.ativo===false?' (inativo)':''}</b><small>${esc(a.objetivo||'Sem objetivo definido')} · ${st}</small></div>
+    <div style="text-align:right">${badge(a.nivel)}<small style="display:block;font-size:12px;margin-top:6px;font-weight:700;color:var(--mute)">${p!=null?nf(p)+' kg':'sem peso'}${d!=null&&d!==0?` <span class="${d<0?'up':'dn'}">${d>0?'+':''}${nf(d)}</span>`:''}</small></div></div>`}).join('');
+}
+V.alunos=()=>`<div class="hd"><div><p>${S.alunos.length} na sua carteira</p><h2>Alunos</h2></div><button class="av" onclick="novoAluno()" style="color:var(--red)" aria-label="Novo aluno">${I.plus}</button></div>
+  <label class="search">${I.search}<input placeholder="Buscar aluno" value="${esc(S.busca)}" oninput="S.busca=this.value;$('lista').innerHTML=listaAlunos()"></label>
+  <div class="chips">${['todos','base','forte','palco'].map(n=>`<button class="${S.filtroNivel===n?'on':''}" onclick="S.filtroNivel='${n}';render()">${n==='todos'?'Todos':LV[n].nome+' · '+LV[n].sub}</button>`).join('')}</div>
+  <div class="card" style="padding:4px 16px" id="lista">${S.alunos.length?listaAlunos():'<div class="empty"><h3>Nenhum aluno ainda</h3><p>Cadastre o primeiro aluno para começar.</p><button class="btn" onclick="novoAluno()">'+I.plus+' Novo aluno</button></div>'}</div>`;
+
+/* ---- evolução (comum à ficha e ao aluno) ---- */
+function avaliacoesHTML(a){
+  const l=regsDe(a.id).slice().reverse();
+  if(!l.length)return'<p style="font-size:13px;color:var(--mute);padding:8px 0">Nenhuma avaliação registrada.</p>';
+  const lab={cintura:'cintura',quadril:'quadril',braco:'braço',coxa:'coxa',peito:'peito'};
+  return l.map(r=>{
+    const pode=eP()||r.criado_por===S.user.id;
+    const m=r.medidas?Object.entries(r.medidas).filter(([k,v])=>v!=null&&lab[k]).map(([k,v])=>`${lab[k]} ${nf(v)}`).join(' · '):'';
+    return`<div class="hist"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${fmtD(r.data)}</b>
+     <span style="font-weight:700">${r.peso!=null?nf(r.peso)+' kg':''}${r.gordura!=null?` · ${nf(r.gordura)}%`:''}</span></div>
+     ${m?`<small>${esc(m)} (cm)</small>`:''}${r.obs?`<small>${esc(r.obs)}</small>`:''}
+     ${pode?`<div style="display:flex;gap:8px;margin-top:8px"><button class="mini" onclick="avalSheet('${esc(a.id)}','${esc(r.id)}')">Editar</button><button class="mini red" onclick="apagarReg('${esc(a.id)}','${esc(r.id)}')">Apagar</button></div>`:''}</div>`}).join('');
+}
+function evolHTML(a){
+  const pr=comPeso(a.id),p=pr.length?Number(pr[pr.length-1].peso):null,d=pr.length>1?p-Number(pr[0].peso):null;
+  const g=regsDe(a.id).filter(r=>r.gordura!=null),gl=g.length?Number(g[g.length-1].gordura):null,gd=g.length>1?gl-Number(g[0].gordura):null;
+  const imc=p!=null&&a.altura?p/(a.altura*a.altura):null;
+  const meta=a.meta_peso!=null?Number(a.meta_peso):null;
+  const med=medidasResumo(a.id);
+  return`<div class="grid2">
+   <div class="kpi"><small>Peso atual</small><b>${p!=null?nf(p)+' kg':'—'}</b><span style="color:var(--mute)">${d!=null?`${d>0?'+':''}${nf(d)} kg em ${pr.length} registros`:'sem variação ainda'}</span></div>
+   <div class="kpi"><small>Gordura corporal</small><b>${gl!=null?nf(gl)+'%':'—'}</b><span style="color:var(--mute)">${gd!=null?`${gd>0?'+':''}${nf(gd)} pts desde o início`:'sem comparação'}</span></div>
+   <div class="kpi"><small>IMC</small><b>${imc!=null?nf(imc):'—'}</b><span style="color:var(--mute)">${a.altura?'altura '+nf(a.altura,2)+' m':'sem altura'}</span></div>
+   <div class="kpi"><small>Meta de peso</small><b>${meta!=null?nf(meta)+' kg':'—'}</b><span style="color:var(--palco)">${meta!=null&&p!=null?`faltam ${nf(Math.abs(meta-p))} kg`:''}</span></div></div>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:15px">Evolução do peso</b>
+   <div class="seg2" style="margin:0;width:130px"><button class="${S.periodo==='4s'?'on':''}" onclick="S.periodo='4s';render()">4 sem</button><button class="${S.periodo==='tudo'?'on':''}" onclick="S.periodo='tudo';render()">Tudo</button></div></div>
+   ${chart(a)}</div>
+  <div class="card"><b style="font-size:15px">Medidas (cm)</b>
+   ${med.length?`<table class="med" style="margin-top:6px"><tr><th></th><th>Início</th><th>Atual</th><th>Dif.</th></tr>${med.map(m=>{const df=m.f-m.i;const bom=(m.k==='cintura'||m.k==='quadril')?df<0:df>0;return`<tr><td>${m.n}</td><td>${nf(m.i)}</td><td><b>${nf(m.f)}</b></td><td class="${df===0?'':bom?'up':'dn'}">${df>0?'+':''}${nf(df)}</td></tr>`}).join('')}</table>`:'<p style="font-size:13px;color:var(--mute);padding-top:8px">Nenhuma medida registrada.</p>'}</div>
+  <div class="lbl">Avaliações</div><div class="card" style="padding:4px 16px">${avaliacoesHTML(a)}</div>`;
+}
+V.evol=()=>{
+  const a=S.alunos[0];
+  const head=`<div class="hd"><div><p>Seu progresso</p><h2>Evolução</h2></div>${avBtn()}</div>`;
+  if(!a)return head+semAluno();
+  return head+evolHTML(a)+`<button class="btn" onclick="pesoSheet('${esc(a.id)}')">${I.plus} Registrar meu peso</button>`;
+};
+const semAluno=()=>`<div class="card empty"><h3>Seu treino ainda não foi liberado</h3><p>Não encontramos um cadastro de aluno ligado a esta conta. Peça ao seu personal para enviar o convite novamente.</p></div>`;
+
+/* ---- ficha do aluno ---- */
+function statusConvite(a){
+  if(a.user_id)return{t:'Já usa o app',c:'var(--base)'};
+  if(a.convidado_em)return{t:'Convite enviado em '+fmtTs(a.convidado_em),c:'var(--palco)'};
+  return{t:'Sem acesso ao app',c:'var(--mute)'};
+}
+function waLink(a){
+  let d=String(a.telefone||'').replace(/\D/g,'');if(!d)return null;
+  if(d.length<=11)d='55'+d;
+  return'https://wa.me/'+d+'?text='+encodeURIComponent(`Oi ${String(a.nome).trim().split(/\s+/)[0]}! Te mandei o convite do app Ápice no seu e-mail.`);
+}
+V.aluno=v=>{
+  const a=aluno(v.id);if(!a)return'<button class="back" onclick="back()">'+I.back+' Voltar</button><p>Aluno não encontrado.</p>';
+  const prog=PROG[a.nivel]||PROG.base,lv=LV[a.nivel]||LV.base,id=a.id,idd=idade(a.nascimento),sc=statusConvite(a),wa=waLink(a),hist=trsDe(id).slice(0,8);
+  return`<button class="back" onclick="back()">${I.back} Voltar</button>
+  <div class="prof"><div class="av" style="border:2px solid ${lv.hex}">${esc(ini(a.nome))}</div><div><h3>${esc(a.nome)}</h3>
+   <p>${[idd!=null?idd+' anos':'',a.altura?nf(a.altura,2)+' m':'',a.objetivo].filter(Boolean).map(esc).join(' · ')||'Sem dados complementares'}</p><div style="margin-top:6px">${badge(a.nivel)}</div></div></div>
+  <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn ghost" style="height:42px;font-size:13px" onclick="alunoSheet('${esc(id)}')">Editar dados</button><button class="btn" style="height:42px;font-size:13px" onclick="avalSheet('${esc(id)}')">${I.plus} Nova avaliação</button></div>
+  ${evolHTML(a)}
+  <div class="lbl">Acesso ao app</div>
+  <div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><i class="dot" style="background:${sc.c};margin:0"></i><b style="font-size:14px">${esc(sc.t)}</b></div>
+   <p style="font-size:12px;color:var(--mute);margin-bottom:12px">${a.email?'E-mail: '+esc(a.email):'Cadastre o e-mail do aluno para poder convidar.'}</p>
+   <button class="btn" id="bt-conv" ${a.email?'':'disabled'} onclick="convidar('${esc(id)}')">${a.user_id?'Reenviar acesso':a.convidado_em?'Reenviar convite':'Convidar para o app'}</button>
+   ${wa?`<a class="btn ghost" style="margin-top:8px" href="${esc(wa)}" target="_blank" rel="noopener">Avisar pelo WhatsApp</a>`:'<p style="font-size:12px;color:var(--dim);margin-top:8px">Cadastre o WhatsApp para enviar o aviso.</p>'}</div>
+  <div class="lbl">Treino atual</div>
+  <div class="hero" style="background:linear-gradient(135deg,${lv.hex}22,transparent 60%),var(--s1)" onclick="go({type:'prog',n:'${esc(a.nivel)}'})"><span class="step">${lv.sub.toUpperCase()}</span><h4 style="font-size:22px">${prog.titulo}</h4><p>${prog.freq} · ${prog.tempo}</p></div>
+  <div class="lbl">Treinos feitos pelo aluno</div>
+  <div class="card" style="padding:4px 16px">${hist.length?hist.map(histTreino).join(''):'<p style="font-size:13px;color:var(--mute);padding:12px 0">Nenhum treino registrado ainda.</p>'}</div>
+  ${a.nota?`<div class="lbl">Anotação</div><div class="card note">${esc(a.nota)}</div>`:''}`;
+};
+function histTreino(t){
+  const ex=Array.isArray(t.exercicios)?t.exercicios:[],f=ex.filter(e=>e.feito).length;
+  return`<div class="hist"><div style="display:flex;justify-content:space-between"><b>${esc(t.treino||'Treino')}</b><span style="color:var(--mute)">${fmtD(t.data)}</span></div><small>${f} de ${ex.length} exercícios${t.feedback?' · '+esc(t.feedback):''}</small></div>`;
+}
+async function convidar(id){
+  const a=aluno(id);busy('bt-conv',true,'Enviando…');
+  try{
+    const {data,error}=await sb.functions.invoke('apice-convidar',{body:{aluno_id:id,redirect_to:URL_APP}});
+    if(error)throw error;if(data&&data.erro)throw {message:data.erro};
+    const row=await Q(sb.from('apice_alunos').select('*').eq('id',id).single());
+    Object.assign(a,row);
+    const sit=data&&data.situacao;
+    toast(sit==='ja_tem_acesso'?'Este aluno já tem acesso ao app':sit==='ligado_a_conta_existente'?'Aluno ligado à conta que ele já tinha':'Convite enviado por e-mail');
+  }catch(e){toast(traduzErro(e))}
+  render();
+}
+
+/* ---- treinos / programas / exercícios ---- */
+V.treinos=()=>`<div class="hd"><div><p>Programas por nível</p><h2>Treinos</h2></div>${avBtn()}</div>
+  ${['base','forte','palco'].map((n,i)=>{const p=PROG[n],l=LV[n];return`<div class="hero" style="background:linear-gradient(140deg,${l.hex}26 0%,transparent 55%),var(--s1)" onclick="go({type:'prog',n:'${n}'})">
+    <span class="step">NÍVEL ${i+1} DE 3</span><div style="font-size:12px;font-weight:700;color:${l.hex};letter-spacing:.1em;text-transform:uppercase">${l.sub}</div>
+    <h4>${l.nome}</h4><p>${p.desc}</p><div class="meta"><span>${p.freq}</span><span style="color:var(--dim)">·</span><span>${p.dur}</span></div></div>`}).join('')}
+  <p style="font-size:12px;color:var(--dim);line-height:1.5;margin-top:4px">Cada aluno segue o programa do nível dele (Base, Forte ou Palco).</p>`;
+V.prog=v=>{
+  const p=PROG[v.n]||PROG.base,l=LV[v.n]||LV.base;
+  return`<button class="back" onclick="back()">${I.back} Voltar</button>
+  <div style="font-size:12px;font-weight:700;color:${l.hex};letter-spacing:.1em;text-transform:uppercase">${l.nome} · ${l.sub}</div>
+  <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin:4px 0 6px">${p.titulo}</h2>
+  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:14px">${p.desc}</p>
+  <div class="prescr" style="margin-bottom:16px"><div><small>Frequência</small><b>${p.freq.replace(' por semana','/sem')}</b></div><div><small>Duração</small><b>${p.dur.split(' ')[0]} sem</b></div><div><small>Sessão</small><b>${p.tempo.split(' ')[0]} min</b></div></div>
+  ${p.dias.map(d=>`<div class="day"><div class="day-h"><div><b>${d.n}</b><small style="display:block">${d.f}</small></div><small>${d.ex.length} exercícios</small></div><div class="day-b">${d.ex.map(k=>exRow(k,v.n)).join('')}</div></div>`).join('')}`;
+};
+function exRow(k,nivel){const e=EX[k];return`<div class="row ex-row" onclick="go({type:'ex',k:'${k}',n:'${nivel||''}'})"><div class="thumb">${stageSVG(k,e,true)}</div><div class="t"><b>${e.nome}</b><small>${nivel?`<b>${e.pres[nivel]}</b> · `:''}${e.grupo} · ${e.equip}</small></div><span class="chev">${I.chev}</span></div>`}
+V.ex=v=>{
+  const e=EX[v.k];
+  return`<button class="back" onclick="back()">${I.back} Voltar</button>
+  <div style="font-size:12px;color:var(--mute);font-weight:600">${e.grupo} · ${e.equip}</div>
+  <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 12px">${e.nome}</h2>
+  <div class="stage">${stageSVG(v.k,e,false)}<div class="lg"><span><span class="dot" style="background:var(--red)"></span>trabalhando</span></div>
+   <div class="ctl"><button onclick="PLAY=!PLAY;this.textContent=PLAY?'Pausar':'Continuar'">${PLAY?'Pausar':'Continuar'}</button>
+   ${[[.5,'0,5x'],[1,'1x']].map(([s,t])=>`<button class="spd ${SPEED===s?'on':''}" onclick="SPEED=${s};document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',b.dataset.s=='${s}'))" data-s="${s}">${t}</button>`).join('')}</div></div>
+  <div class="card"><b style="font-size:15px">Músculos trabalhados</b>
+   <div class="bmaps" style="margin-top:10px"><div>${bodyMap('f',e.prim,e.sec)}<div class="cap">Frente</div></div><div>${bodyMap('b',e.prim,e.sec)}<div class="cap">Costas</div></div></div>
+   <div class="legend"><span><i style="background:var(--red)"></i>Principal</span><span><i style="background:rgba(229,72,77,.45)"></i>Auxiliar</span></div>
+   <p style="font-size:13px;color:var(--mute);margin-top:10px;text-align:center"><b style="color:var(--bone)">${e.prim.map(m=>NOMEM[m]).join(', ')}</b>${e.sec.length?' · '+e.sec.map(m=>NOMEM[m]).join(', '):''}</p></div>
+  <div class="lbl">Séries por nível</div>
+  <div class="prescr" style="margin-bottom:12px">${['base','forte','palco'].map(n=>`<div style="${v.n===n?`outline:1.5px solid ${LV[n].hex}`:''}"><small style="color:${LV[n].hex}">${LV[n].nome}</small><b>${e.pres[n]}</b></div>`).join('')}</div>
+  <div class="lbl">Execução</div><ul class="steps">${e.passos.map((p,i)=>`<li><span>${i+1}</span>${p}</li>`).join('')}</ul>
+  <div class="warn"><b>Erro comum:</b> ${e.erro}</div>`;
+};
+V.exerc=()=>{
+  const lista=Object.keys(EX).filter(k=>!S.muscle||EX[k].prim.includes(S.muscle)||EX[k].sec.includes(S.muscle));
+  return`<div class="hd"><div><p>Toque no músculo para filtrar</p><h2>Exercícios</h2></div>${avBtn()}</div>
+  <div class="card" style="padding:12px"><div class="seg2"><button class="${S.side==='f'?'on':''}" onclick="S.side='f';render()">Frente</button><button class="${S.side==='b'?'on':''}" onclick="S.side='b';render()">Costas</button></div>
+   <div style="width:58%;margin:0 auto">${bodyMap(S.side,[],[],true,S.muscle)}</div>
+   ${S.muscle?`<div style="display:flex;justify-content:center;margin-top:8px"><button class="badge" style="background:var(--redbg);color:var(--red2);font-size:12px;padding:6px 12px" onclick="S.muscle=null;render()">${NOMEM[S.muscle]} ✕</button></div>`:''}</div>
+  <div class="lbl">${lista.length} exercícios${S.muscle?' para '+NOMEM[S.muscle].toLowerCase():''}</div>
+  <div class="card" style="padding:4px 16px">${lista.length?lista.map(k=>exRow(k)).join(''):'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p>'}</div>`;
+};
+
+/* ---- aluno: hoje ---- */
+V.hoje=()=>{
+  const a=S.alunos[0];
+  const head=`<div class="hd"><div><p>${esc(dataLonga())}</p><h2>Bora, ${primeiro(S.perfil.nome)}</h2></div>${avBtn()}</div>`;
+  if(!a)return head+semAluno();
+  const nivel=LV[a.nivel]?a.nivel:'base',prog=PROG[nivel],trs=trsDe(a.id);
+  if(S.dia==null){const l=trs[0],i=l?prog.dias.findIndex(d=>d.n===l.treino):-1;S.dia=i<0?0:(i+1)%prog.dias.length}
+  const dia=prog.dias[S.dia]||prog.dias[0];
+  const feitos=dia.ex.filter(k=>S.feitos[k]&&S.feitos[k].feito).length,pct=feitos/dia.ex.length,R=31,C=2*Math.PI*R;
+  const ja=trs.find(t=>String(t.data).slice(0,10)===hoje());
+  const lim7=addDias(hoje(),-7),sem=trs.filter(t=>String(t.data).slice(0,10)>=lim7).length;
+  const ultCarga=k=>{for(const t of trs){const e=(t.exercicios||[]).find(x=>x.chave===k&&x.carga);if(e)return e.carga}return''};
+  return head+`
+  <div class="chips">${prog.dias.map((d,i)=>`<button class="${S.dia===i?'on':''}" onclick="S.dia=${i};S.feitos={};render()">${d.n}</button>`).join('')}</div>
+  <div class="hero" style="background:linear-gradient(140deg,#E5484D26,transparent 60%),var(--s1);cursor:default"><div style="display:flex;gap:16px;align-items:center">
+   <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${R}" fill="none" stroke="#24272D" stroke-width="7"/><circle cx="37" cy="37" r="${R}" fill="none" stroke="#E5484D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 37 37)"/></svg><b>${feitos}/${dia.ex.length}</b></div>
+   <div><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${dia.n.toUpperCase()} · ${LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${dia.f}</h4><p style="max-width:none">${prog.tempo}</p></div></div></div>
+  ${ja?`<div class="alert"><i style="background:var(--base)"></i><div><b>Você já treinou hoje</b><small>${esc(ja.treino)} registrado. Pode fazer outro se quiser.</small></div></div>`:''}
+  <div class="grid2"><div class="kpi"><small>Sequência</small><b>${sequencia(a.id)} ${sequencia(a.id)===1?'dia':'dias'}</b><span style="color:var(--mute)">dias seguidos treinando</span></div>
+   <div class="kpi"><small>Últimos 7 dias</small><b>${sem}</b><span style="color:var(--mute)">${sem===1?'treino registrado':'treinos registrados'}</span></div></div>
+  <div class="lbl">Exercícios <a onclick="go({type:'prog',n:'${nivel}'})">ver programa</a></div>
+  <div class="card" style="padding:4px 16px">${dia.ex.map(k=>{const e=EX[k],f=S.feitos[k]||{},uc=ultCarga(k);return`<div class="row" style="cursor:default"><button class="check ${f.feito?'on':''}" onclick="toggleEx('${k}')" aria-label="Marcar">${f.feito?I.ok:''}</button>
+   <div class="thumb" onclick="go({type:'ex',k:'${k}',n:'${nivel}'})">${stageSVG(k,e,true)}</div>
+   <div class="t" onclick="go({type:'ex',k:'${k}',n:'${nivel}'})"><b style="${f.feito?'color:var(--mute);text-decoration:line-through':''}">${e.nome}</b><small><b>${e.pres[nivel]}</b>${uc?' · última: '+esc(uc):''}</small></div>
+   <input class="cin" placeholder="carga" value="${esc(f.carga||'')}" oninput="setCarga('${k}',this.value)" aria-label="Carga"></div>`}).join('')}</div>
+  <button class="btn" onclick="feedbackSheet()" ${feitos?'':'disabled'}>Concluir treino</button>
+  ${trs.length?`<div class="lbl">Últimos treinos</div><div class="card" style="padding:4px 16px">${trs.slice(0,5).map(histTreino).join('')}</div>`:''}`;
+};
+function toggleEx(k){const f=S.feitos[k]||(S.feitos[k]={});f.feito=!f.feito;render()}
+function setCarga(k,v){const f=S.feitos[k]||(S.feitos[k]={});f.carga=v;}
+function feedbackSheet(){
+  S.feel='ok';
+  openSheet(`<h4>Como foi o treino?</h4><div class="feel" id="feel">${[['facil','Fácil'],['ok','Ok'],['pesado','Pesado']].map(([k,n])=>`<button class="${k==='ok'?'on':''}" onclick="setFeel('${k}')">${n}</button>`).join('')}</div>
+  <div class="fld"><label>Quer contar mais? (opcional)</label><textarea id="fb-tx" maxlength="500" placeholder="Ex.: senti o ombro no desenvolvimento"></textarea></div>
+  <button class="btn" id="bt-fb" onclick="salvarTreino()">Salvar treino</button>`);
+}
+function setFeel(k){S.feel=k;[...document.querySelectorAll('#feel button')].forEach((b,i)=>b.classList.toggle('on',['facil','ok','pesado'][i]===k))}
+async function salvarTreino(){
+  const a=S.alunos[0],nivel=LV[a.nivel]?a.nivel:'base',dia=PROG[nivel].dias[S.dia];
+  const nome={facil:'Fácil',ok:'Ok',pesado:'Pesado'}[S.feel],tx=val('fb-tx').trim();
+  const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(k=>({chave:k,feito:!!(S.feitos[k]&&S.feitos[k].feito),carga:(S.feitos[k]&&S.feitos[k].carga||'').trim()})),feedback:nome+(tx?': '+tx:'')};
+  busy('bt-fb',true,'Salvando…');
+  try{const r=await Q(sb.from('apice_treinos_feitos').insert(row).select().single());
+    (S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!')}
+  catch(e){busy('bt-fb',false);toast(traduzErro(e))}
+}
+/* ================= FORMULÁRIOS ================= */
+const inp=(id,label,v,extra)=>`<div class="fld"><label>${label}</label><input id="${id}" value="${esc(v==null?'':v)}" ${extra||''}></div>`;
+function novoAluno(){alunoSheet(null)}
+function alunoSheet(id){
+  const a=id?aluno(id):{};
+  openSheet(`<h4>${id?'Editar aluno':'Novo aluno'}</h4>
+  ${inp('al-nome','Nome *',a.nome,'placeholder="Nome completo" autocomplete="off"')}
+  ${inp('al-email','E-mail (para o convite)',a.email,'type="email" inputmode="email" placeholder="aluno@email.com"')}
+  ${inp('al-tel','WhatsApp',a.telefone,'inputmode="tel" placeholder="(11) 99999-9999"')}
+  <div class="g3">${inp('al-nasc','Nascimento',a.nascimento,'type="date"')}${inp('al-alt','Altura (m)',a.altura!=null?nf(a.altura,2):'','inputmode="decimal" placeholder="1,75"')}</div>
+  <div class="g3"><div class="fld"><label>Sexo</label><select id="al-sexo"><option value="">Não informar</option>${[['feminino','Feminino'],['masculino','Masculino']].map(([k,n])=>`<option value="${k}" ${a.sexo===k?'selected':''}>${n}</option>`).join('')}</select></div>
+   <div class="fld"><label>Nível</label><select id="al-nivel">${['base','forte','palco'].map(n=>`<option value="${n}" ${(a.nivel||'base')===n?'selected':''}>${LV[n].nome} · ${LV[n].sub}</option>`).join('')}</select></div></div>
+  ${inp('al-obj','Objetivo',a.objetivo,'placeholder="Hipertrofia, emagrecimento, campeonato…"')}
+  ${inp('al-meta','Meta de peso (kg)',a.meta_peso!=null?nf(a.meta_peso):'','inputmode="decimal" placeholder="75,0"')}
+  <div class="fld"><label>Anotação</label><textarea id="al-nota" placeholder="Observações do personal">${esc(a.nota||'')}</textarea></div>
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-al" onclick="salvarAluno('${id?esc(id):''}')">${id?'Salvar alterações':'Cadastrar aluno'}</button>
+  ${id?`<button class="btn ghost" style="margin-top:8px;color:var(--red2)" onclick="excluirAluno('${esc(id)}')">Excluir aluno</button>`:''}`);
+}
+async function salvarAluno(id){
+  const nome=val('al-nome').trim();if(!nome){msg('Digite o nome do aluno.');return}
+  const email=val('al-email').trim();if(email&&!/^\S+@\S+\.\S+$/.test(email)){msg('E-mail inválido.');return}
+  let alt=pnum(val('al-alt'));if(alt!=null&&alt>3)alt=alt/100;
+  const meta=pnum(val('al-meta'));
+  if(Number.isNaN(alt)||(alt!=null&&(alt<0.5||alt>2.5))){msg('Altura inválida. Use metros, por exemplo 1,75.');return}
+  if(Number.isNaN(meta)||(meta!=null&&(meta<20||meta>400))){msg('Meta de peso inválida.');return}
+  const row={nome,email:email||null,telefone:val('al-tel').trim()||null,nascimento:val('al-nasc')||null,altura:alt,sexo:val('al-sexo')||null,nivel:val('al-nivel'),objetivo:val('al-obj').trim()||null,meta_peso:meta,nota:val('al-nota').trim()||null};
+  msg('');busy('bt-al',true,'Salvando…');
+  try{
+    if(id){const r=await Q(sb.from('apice_alunos').update(row).eq('id',id).select().single());Object.assign(aluno(id),r);closeSheet();render();toast('Aluno atualizado')}
+    else{row.personal_id=S.user.id;row.ativo=true;const r=await Q(sb.from('apice_alunos').insert(row).select().single());
+      S.alunos.push(r);S.alunos.sort((x,y)=>String(x.nome).localeCompare(String(y.nome),'pt-BR'));S.regs[r.id]=[];S.trs[r.id]=[];
+      closeSheet();S.tab='alunos';S.stack=[{type:'aluno',id:r.id}];render();toast('Aluno cadastrado')}
+  }catch(e){busy('bt-al',false);msg(traduzErro(e))}
+}
+function excluirAluno(id){
+  const a=aluno(id);
+  confirmar('Excluir aluno?',`${a.nome} e todo o histórico de avaliações e treinos dele serão apagados. Isso não pode ser desfeito.`,'Sim, excluir aluno',async()=>{
+    const {error}=await sb.from('apice_alunos').delete().eq('id',id);if(error)throw error;
+    S.alunos=S.alunos.filter(x=>x.id!==id);delete S.regs[id];delete S.trs[id];S.stack=[];closeSheet();render();toast('Aluno excluído');
+  });
+}
+function avalSheet(alunoId,regId){
+  const a=aluno(alunoId),r=regId?regsDe(alunoId).find(x=>x.id===regId):{},m=r.medidas||{};
+  const n=v=>v!=null?nf(v):'';
+  openSheet(`<h4>${regId?'Editar avaliação':'Nova avaliação'} · ${primeiro(a.nome)}</h4>
+  ${inp('av-data','Data',r.data?String(r.data).slice(0,10):hoje(),'type="date"')}
+  <div class="g3">${inp('av-peso','Peso (kg)',n(r.peso),'inputmode="decimal" placeholder="75,0"')}${inp('av-gord','% de gordura',n(r.gordura),'inputmode="decimal" placeholder="18,0"')}</div>
+  <div class="lbl" style="margin:8px 0 8px">Medidas (cm)</div>
+  <div class="g3">${inp('av-cintura','Cintura',n(m.cintura),'inputmode="decimal"')}${inp('av-quadril','Quadril',n(m.quadril),'inputmode="decimal"')}${inp('av-braco','Braço',n(m.braco),'inputmode="decimal"')}${inp('av-coxa','Coxa',n(m.coxa),'inputmode="decimal"')}${inp('av-peito','Peito',n(m.peito),'inputmode="decimal"')}</div>
+  <div class="fld"><label>Observação</label><textarea id="av-obs" placeholder="Como o aluno está, ajustes, etc.">${esc(r.obs||'')}</textarea></div>
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-av" onclick="salvarAval('${esc(alunoId)}','${regId?esc(regId):''}')">Salvar avaliação</button>`);
+}
+async function salvarAval(alunoId,regId){
+  const data=val('av-data');if(!data){msg('Informe a data.');return}
+  const peso=pnum(val('av-peso')),gord=pnum(val('av-gord'));const med={};let bad=false;
+  for(const k of ['cintura','quadril','braco','coxa','peito']){const v=pnum(val('av-'+k));if(Number.isNaN(v)||(v!=null&&(v<=0||v>300)))bad=true;else if(v!=null)med[k]=v}
+  if(bad||Number.isNaN(peso)||Number.isNaN(gord)){msg('Confira os números digitados.');return}
+  if(peso!=null&&(peso<20||peso>400)){msg('Peso fora do esperado (20 a 400 kg).');return}
+  if(gord!=null&&(gord<1||gord>70)){msg('% de gordura fora do esperado (1 a 70).');return}
+  if(peso==null&&gord==null&&!Object.keys(med).length){msg('Preencha ao menos o peso, a gordura ou uma medida.');return}
+  const row={aluno_id:alunoId,data,peso,gordura:gord,medidas:Object.keys(med).length?med:null,obs:val('av-obs').trim()||null};
+  msg('');busy('bt-av',true,'Salvando…');
+  try{
+    if(regId){const r=await Q(sb.from('apice_registros').update(row).eq('id',regId).select().single());const l=S.regs[alunoId];l[l.findIndex(x=>x.id===regId)]=r}
+    else{row.criado_por=S.user.id;const r=await Q(sb.from('apice_registros').insert(row).select().single());(S.regs[alunoId]=S.regs[alunoId]||[]).push(r)}
+    sortRegs(alunoId);closeSheet();render();toast('Avaliação salva')
+  }catch(e){busy('bt-av',false);msg(traduzErro(e))}
+}
+function pesoSheet(alunoId){
+  const pr=comPeso(alunoId),u=pr.length?Number(pr[pr.length-1].peso):'';
+  openSheet(`<h4>Registrar meu peso</h4><div class="big-in"><input id="pw" inputmode="decimal" value="${u!==''?nf(u):''}" placeholder="0,0"><span>kg</span></div>
+  ${inp('pw-data','Data',hoje(),'type="date"')}<div class="msg" id="msg"></div>
+  <button class="btn" id="bt-pw" onclick="salvarPeso('${esc(alunoId)}')">Salvar peso</button>`);
+}
+async function salvarPeso(alunoId){
+  const p=pnum(val('pw')),data=val('pw-data');
+  if(p==null||Number.isNaN(p)||p<20||p>400){msg('Digite um peso válido (20 a 400 kg).');return}
+  if(!data){msg('Informe a data.');return}
+  msg('');busy('bt-pw',true,'Salvando…');
+  try{const r=await Q(sb.from('apice_registros').insert({aluno_id:alunoId,data,peso:p,criado_por:S.user.id}).select().single());
+    (S.regs[alunoId]=S.regs[alunoId]||[]).push(r);sortRegs(alunoId);closeSheet();render();toast('Peso registrado')}
+  catch(e){busy('bt-pw',false);msg(traduzErro(e))}
+}
+function apagarReg(alunoId,regId){
+  const r=regsDe(alunoId).find(x=>x.id===regId);
+  confirmar('Apagar avaliação?',`A avaliação de ${fmtD(r.data)} será removida do histórico.`,'Sim, apagar',async()=>{
+    const {error}=await sb.from('apice_registros').delete().eq('id',regId);if(error)throw error;
+    S.regs[alunoId]=S.regs[alunoId].filter(x=>x.id!==regId);closeSheet();render();toast('Avaliação apagada');
+  });
+}
+
+iniciar();
+</script>
+</body>
+</html>

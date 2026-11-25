@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-26-pix",
+    "data": "2026-11-26",
+    "titulo": "Mensalidade por Pix",
+    "texto": "Cadastre sua chave Pix no Perfil e o valor e o dia de vencimento em cada aluno. O aluno vê a chave, paga no banco dele e toca em Já paguei. Você recebe o aviso e vê quem está em aberto."
+  },
+  {
     "id": "2026-11-26-series",
     "data": "2026-11-26",
     "titulo": "Carga por série e descanso",

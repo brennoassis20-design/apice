@@ -377,7 +377,7 @@ async function apiEmail(body){
 const Q=async p=>{const r=await p;if(r.error)throw r.error;return r.data};
 
 /* ================= ESTADO ================= */
-const S={screen:'loading',user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
+const S={screen:'loading',user:null,perfil:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
   dia:null,feitos:{},aberto:null,cex:null,feel:'ok',recovery:false,pwdDone:false,boot:false,carregando:false,aviso:''};
 const eP=()=>S.perfil&&S.perfil.papel==='personal';
 const TABS={personal:[['painel','Painel'],['alunos','Alunos'],['treinos','Treinos'],['exerc','Exercícios']],
@@ -524,6 +524,19 @@ function fakeGo(){
   else if(t==='testepush'){(async()=>{await salvarPeso0()})()}
   else if(t==='instalar'){instalarSheet(a)}
   else if(t==='teste2'){(async()=>{render();S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();setFeel('pesado');$('fb-tx').value='cansei';await salvarTreino();const a=S.alunos[0];render();document.title='T2 treinos='+S.trs[a.id].length+' primeiro='+S.trs[a.id][0].data+' '+S.trs[a.id][0].treino+' fb='+S.trs[a.id][0].feedback+' seq='+sequencia(a.id)+' proxDia='+S.dia})()}
+  else if(t==='pix'){perfilSheet();setTimeout(()=>{const e=$('pix-bloco'),sh=document.querySelector('.sheet');if(e&&sh)sh.scrollTop=e.offsetTop-10},300)}
+  else if(t==='mensal'){S.tab='alunos';S.stack=[{type:'aluno',id:'a2'}];render();if(!QS.get('noscroll'))setTimeout(()=>{const e=$('mensalCard');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-20)},300)}
+  else if(t==='pagar'){render();if(!document.querySelector('[data-mensal]'))mensalSheet()}
+  else if(t==='unit'){const T=[['2026-11-10','2026-11-10','hoje'],['2026-11-09','2026-11-10','avencer1'],['2026-11-11','2026-11-10','atrasado1'],['2027-02-28','2027-02-31','hoje(fev31)'],['2027-02-27','2027-02-31','avencer1'],['2028-02-28','2028-02-31','avencer1(bissexto)'],['2026-11-05','2026-11-10','avencer5']];
+    const L=T.map(([h,v,e])=>{const s=sitMensal({mensalidade:100,vencimento_dia:+v.slice(8)},[],h);const got=s.estado==='avencer'?'avencer'+s.dias:s.estado==='atrasado'?'atrasado'+s.dias:s.estado;return got+(got===e.replace(/\(.*/,'')?'=ok':'=ERRO('+e+')')});
+    L.push('pago='+sitMensal({mensalidade:100,vencimento_dia:10},[{competencia:'2026-11'}],'2026-11-20').estado,'sem='+sitMensal({mensalidade:null,vencimento_dia:10},[],'2026-11-20'));
+    document.title='UNIT '+L.join(' | ')}
+  else if(t==='testepix'){(async()=>{const L=[];render();const b=document.querySelector('[data-paguei]');L.push('btn='+!!b);b.click();await new Promise(r=>setTimeout(r,700));
+    const rows=await Q(sb.from('apice_pagamentos').select('*').eq('aluno_id','a1'));const r=rows.find(x=>x.competencia===hoje().slice(0,7));
+    L.push('linha='+!!r+' comp='+(r&&r.competencia)+' valor='+(r&&r.valor)+' marcado_por='+(r&&r.marcado_por)+' toast='+$('toast').textContent);
+    const pu=(window.__push||[]).filter(x=>x.tabela==='apice_pagamentos');L.push('avisar='+pu.length+' id_ok='+(pu[0]&&pu[0].id===(r&&r.id)));
+    L.push('situacao='+sitDe(S.alunos[0]).estado+' card_pago='+/Pago ✓/.test($('view').innerHTML));
+    document.title='TESTEPIX '+L.join(' | ')})()}
   else if(t==='teste'){(async()=>{const L=[];
     S.dia=0;S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();$('fb-tx').value='ok <b>x</b>';await salvarTreino();
     L.push('treinos='+S.trs.a1.length+' ultimo='+S.trs.a1[0].treino+' fb='+S.trs.a1[0].feedback+' prox='+(S.dia));const ex0=S.ultRow&&S.ultRow.exercicios[0];L.push('series='+(ex0&&Array.isArray(ex0.series)?ex0.series.length:'FALTA')+' carga0='+(ex0&&ex0.carga)+' feito0='+(ex0&&ex0.feito)+' s0='+JSON.stringify(ex0&&ex0.series&&ex0.series[0]));
@@ -540,16 +553,18 @@ function makeFake(kind){
   const P={id:'p1',email:'brenno@exemplo.com'},U={id:'u1',email:'lucas@exemplo.com'};
   let cur=kind==='personal'||kind==='vazio'?P:kind==='aluno'?U:null;
   const db={
-   apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
-   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[]};
+   apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal',pix_tipo:'email',pix_chave:'brenno@exemplo.com',pix_nome:'Brenno Assis'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
+   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[]};
   if(kind!=='vazio'){
    db.apice_alunos=[
-    {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
-    {id:'a2',personal_id:'p1',user_id:null,nome:'Ana Ribeiro',email:'ana@exemplo.com',telefone:'(11) 97777-1111',nascimento:'1997-09-03',altura:1.64,sexo:'feminino',nivel:'base',objetivo:'Emagrecimento',meta_peso:65,nota:null,ativo:true,convidado_em:new Date(Date.now()-3*864e5).toISOString()},
+    {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,mensalidade:150,vencimento_dia:10,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
+    {id:'a2',personal_id:'p1',user_id:null,nome:'Ana Ribeiro',email:'ana@exemplo.com',telefone:'(11) 97777-1111',nascimento:'1997-09-03',altura:1.64,sexo:'feminino',nivel:'base',objetivo:'Emagrecimento',meta_peso:65,nota:null,ativo:true,mensalidade:120,vencimento_dia:Math.max(1,new Date().getDate()-6),convidado_em:new Date(Date.now()-3*864e5).toISOString()},
     {id:'a3',personal_id:'p1',user_id:null,nome:'Rafael Costa',email:null,telefone:null,nascimento:'1999-01-20',altura:1.80,sexo:'masculino',nivel:'palco',objetivo:'Campeonato',meta_peso:84,nota:'Check-in de fotos todo domingo.',ativo:true,convidado_em:null}];
    [[49,78.0,18.2],[42,78.6],[35,79.1,17.6],[28,79.5],[21,80.2,17.2],[14,80.6],[7,81.0,16.9],[1,81.4,16.7]].forEach(([d,p,g],i)=>db.apice_registros.push({id:'r'+i,aluno_id:'a1',data:ago(d),peso:p,gordura:g==null?null:g,medidas:{cintura:84-i*.2,braco:36.5+i*.25,coxa:57+i*.3,peito:101+i*.5},obs:i===7?'Boa evolução no braço.':null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
    [[60,72.4],[30,70.2],[3,68.6]].forEach(([d,p],i)=>db.apice_registros.push({id:'s'+i,aluno_id:'a2',data:ago(d),peso:p,gordura:null,medidas:{cintura:82-i*2},obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
    [[44,92.0],[40,86.3]].forEach(([d,p],i)=>db.apice_registros.push({id:'t'+i,aluno_id:'a3',data:ago(d),peso:p,gordura:11.8-i,medidas:null,obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
+   /* pagamentos: a1 pagou 3 meses anteriores e o mês atual (menos na visão do aluno, p/ testar o 'Já paguei') */
+   ultimosMeses(4).forEach((c,i)=>{if(i===0&&kind==='aluno')return;db.apice_pagamentos.push({id:'pg'+i,aluno_id:'a1',competencia:c,valor:150,marcado_em:c+'-0'+(i?8:3)+'T12:00:00Z',marcado_por:i?'p1':'u1'})});
    /* histórico com séries: 5 treinos, cargas crescentes (o último ainda no formato antigo p/ testar compatibilidade) */
    const sr=(c,r)=>c.map(x=>({reps:r,carga:x,feito:true}));
    const mx=l=>fmtKg(Math.max(...l));
@@ -598,6 +613,7 @@ function makeFake(kind){
     async updateUser(){return{data:{user:cur},error:null}}
    },
    from:t=>new QB(t),
+   rpc:async(n)=>{await new Promise(r=>setTimeout(r,100));if(n!=='apice_pix_do_meu_personal')return{data:null,error:{message:'rpc desconhecida'}};const p=db.apice_perfis[0];return{data:[{pix_tipo:p.pix_tipo,pix_chave:p.pix_chave,pix_nome:p.pix_nome,personal_nome:p.nome}],error:null}},
    functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));if(n==='apice-notificar'){(window.__push=window.__push||[]).push(body);return{data:{ok:true,enviados:0},error:null}}const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
      if(a.user_id)return{data:{ok:true,situacao:'ja_tem_acesso'},error:null};a.convidado_em=new Date().toISOString();return{data:{ok:true,situacao:'convite_enviado'},error:null}}}
   };
@@ -690,7 +706,7 @@ async function sair(){
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
-function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
+function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
 
 /* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
 function iniciar(){
@@ -730,6 +746,9 @@ async function carregarTudo(){
     S.alunos=await Q(sb.from('apice_alunos').select('*').order('nome'));
     const rg=await Q(sb.from('apice_registros').select('*').order('data'));
     const tr=await Q(sb.from('apice_treinos_feitos').select('*').order('data',{ascending:false}));
+    S.pags={};S.pix=null;
+    try{const pg=await Q(sb.from('apice_pagamentos').select('*').order('competencia'));pg.forEach(r=>{(S.pags[r.aluno_id]=S.pags[r.aluno_id]||[]).push(r)})}catch(_){}
+    if(p.papel!=='personal'){try{const px=await Q(sb.rpc('apice_pix_do_meu_personal'));S.pix=Array.isArray(px)?px[0]||null:px||null}catch(_){S.pix=null}}
     S.regs={};S.trs={};S.alunos.forEach(a=>{S.regs[a.id]=[];S.trs[a.id]=[]});
     rg.forEach(r=>{(S.regs[r.aluno_id]=S.regs[r.aluno_id]||[]).push(r)});
     tr.forEach(r=>{(S.trs[r.aluno_id]=S.trs[r.aluno_id]||[]).push(r)});
@@ -837,7 +856,128 @@ function perfilSheet(){
   openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
   <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">📲 Instalar no celular</button>
   ${pushOk()||(SO==='ios'&&!INSTALADO())?'<button class="btn ghost" style="margin-bottom:8px" onclick="ativarPush()">'+(pushPerm()==='granted'?'🔔 Notificações ativadas ✓':'🔔 Ativar notificações')+'</button>':''}
+  ${eP()?pixBloco():`<button class="btn ghost" style="margin-bottom:8px" onclick="mensalSheet()">💳 Minha mensalidade</button>`}
   <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
+}
+
+/* ================= MENSALIDADE (Pix) ================= */
+const brl=n=>'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const PIX_TIPOS=[['cpf','CPF'],['cnpj','CNPJ'],['email','E-mail'],['telefone','Telefone'],['aleatoria','Chave aleatória']];
+const pixTipoNome=t=>(PIX_TIPOS.find(x=>x[0]===t)||[0,'Chave'])[1];
+function pixNorm(tipo,raw){
+  const r=String(raw||'').trim(),d=r.replace(/\D/g,'');
+  if(!r)return{erro:'Digite a chave Pix.'};
+  if(tipo==='cpf')return d.length===11?{v:d}:{erro:'CPF precisa ter 11 números.'};
+  if(tipo==='cnpj')return d.length===14?{v:d}:{erro:'CNPJ precisa ter 14 números.'};
+  if(tipo==='email')return /^\S+@\S+$/.test(r)&&r.length<=120?{v:r.toLowerCase()}:{erro:'E-mail inválido.'};
+  if(tipo==='telefone'){let n=d;if((n.length===12||n.length===13)&&n.startsWith('55'))n=n.slice(2);return n.length===10||n.length===11?{v:'+55'+n}:{erro:'Telefone com DDD, 10 ou 11 números.'}}
+  if(tipo==='aleatoria')return r.length>=8&&r.length<=120&&!/\s/.test(r)?{v:r}:{erro:'Chave aleatória inválida.'};
+  return{erro:'Escolha o tipo da chave.'};
+}
+function pixMostra(tipo,v){
+  v=String(v||'');
+  if(tipo==='cpf'&&v.length===11)return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+  if(tipo==='cnpj'&&v.length===14)return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+  if(tipo==='telefone'){const d=v.replace(/\D/g,'').replace(/^55/,'');if(d.length===11)return`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;if(d.length===10)return`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`}
+  return v;
+}
+function pixBloco(){
+  const p=S.perfil||{},tem=p.pix_chave;
+  return`<div id="pix-bloco" style="border-top:1px solid var(--line);margin:6px 0 14px;padding-top:14px"><h4 style="font-size:16px;margin-bottom:6px">Recebimento por Pix</h4>
+   <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">${tem?`Chave atual: <b style="color:var(--bone)">${esc(pixTipoNome(p.pix_tipo))} · ${esc(pixMostra(p.pix_tipo,p.pix_chave))}</b>${p.pix_nome?' · '+esc(p.pix_nome):''}`:'Cadastre sua chave para os alunos pagarem a mensalidade por Pix.'}</p>
+   <div class="fld"><label>Tipo da chave</label><select id="px-tipo">${PIX_TIPOS.map(([k,n])=>`<option value="${k}" ${(p.pix_tipo||'cpf')===k?'selected':''}>${n}</option>`).join('')}</select></div>
+   <div class="fld"><label>Chave Pix</label><input id="px-chave" value="${esc(tem?pixMostra(p.pix_tipo,p.pix_chave):'')}" autocomplete="off" autocapitalize="off" placeholder="Sua chave"></div>
+   <div class="fld"><label>Nome de quem recebe</label><input id="px-nome" maxlength="80" value="${esc(p.pix_nome||'')}" autocomplete="off" placeholder="Nome que aparece no banco"></div>
+   <div class="msg" id="msg"></div>
+   <button class="btn" id="bt-px" onclick="salvarPix()">Salvar chave Pix</button></div>`;
+}
+async function salvarPix(){
+  const tipo=val('px-tipo'),n=pixNorm(tipo,val('px-chave')),nome=val('px-nome').trim();
+  if(n.erro){msg(n.erro);return}
+  if(!nome){msg('Digite o nome de quem recebe.');return}
+  msg('');busy('bt-px',true,'Salvando…');
+  try{const r=await Q(sb.from('apice_perfis').update({pix_tipo:tipo,pix_chave:n.v,pix_nome:nome}).eq('id',S.user.id).select().single());
+    Object.assign(S.perfil,{pix_tipo:r.pix_tipo,pix_chave:r.pix_chave,pix_nome:r.pix_nome});perfilSheet();toast('Chave Pix salva')}
+  catch(e){busy('bt-px',false);msg(traduzErro(e))}
+}
+/* situação do mês: função pura (h = 'AAAA-MM-DD') */
+function vencDoMes(y,m,d){const ult=new Date(y,m,0).getDate();return y+'-'+pad(m)+'-'+pad(Math.min(d,ult))}
+function sitMensal(a,pags,h){
+  const m=Number(a&&a.mensalidade),d=Number(a&&a.vencimento_dia);
+  if(!(m>0)||!(d>=1&&d<=31))return null;
+  const comp=h.slice(0,7),venc=vencDoMes(+h.slice(0,4),+h.slice(5,7),d),pago=(pags||[]).find(x=>x.competencia===comp)||null;
+  const base={valor:m,venc,comp,pago};
+  if(pago)return Object.assign(base,{estado:'pago',dias:0,txt:'Pago ✓ em '+fmtDC(pago.marcado_em||pago.criado||venc),cor:'var(--base)'});
+  const dias=diasEntre(h,venc);
+  if(dias>0)return Object.assign(base,{estado:'avencer',dias,txt:'Vence em '+dias+(dias===1?' dia':' dias'),cor:'var(--palco)'});
+  if(dias===0)return Object.assign(base,{estado:'hoje',dias:0,txt:'Vence hoje',cor:'var(--palco)'});
+  return Object.assign(base,{estado:'atrasado',dias:-dias,txt:'Atrasado há '+(-dias)+(dias===-1?' dia':' dias'),cor:'var(--red)'});
+}
+const sitDe=a=>sitMensal(a,S.pags[a.id],hoje());
+function ultimosMeses(n){const h=hoje(),y=+h.slice(0,4),m=+h.slice(5,7)-1,L=[];for(let i=0;i<n;i++){const d=new Date(y,m-i,1);L.push(d.getFullYear()+'-'+pad(d.getMonth()+1))}return L}
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function mensalCardPersonal(a){
+  const s=sitDe(a);if(!s)return'';
+  const id=esc(a.id),mes=ultimosMeses(6).reverse(),pg=S.pags[a.id]||[];
+  const wa=a.telefone&&!s.pago?(()=>{let d=String(a.telefone).replace(/\D/g,'');if(!d)return null;if(d.length<=11)d='55'+d;
+    return'https://wa.me/'+d+'?text='+encodeURIComponent(`Oi ${String(a.nome).trim().split(/\s+/)[0]}! Tudo bem? Passando para lembrar da mensalidade de ${brl(s.valor)}, com vencimento em ${fmtD(s.venc)}. Se já pagou, desconsidere. Obrigado!`)})():null;
+  return`<div class="lbl">Mensalidade</div><div class="card" id="mensalCard">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:22px">${esc(brl(s.valor))}</b><span style="font-size:12px;color:var(--mute)">vence todo dia ${esc(a.vencimento_dia)}</span></div>
+   <div style="display:flex;align-items:center;gap:8px;margin:10px 0 12px"><i class="dot" style="background:${s.cor};margin:0"></i><b style="font-size:14px;color:${s.cor}">${esc(s.txt)}</b><span style="font-size:12px;color:var(--mute)">· ${esc(fmtD(s.venc))}</span></div>
+   <div style="display:flex;gap:6px;margin-bottom:12px">${mes.map(c=>{const ok=pg.some(x=>x.competencia===c);return`<div style="flex:1;text-align:center;font-size:11px;padding:7px 0;border-radius:10px;background:var(--s2);color:${ok?'var(--base)':'var(--dim)'};font-weight:700">${MESES[+c.slice(5)-1]}<br>${ok?'✓':'—'}</div>`}).join('')}</div>
+   ${s.pago?`<button class="btn ghost" onclick="desfazerPago('${id}')">Desfazer pagamento</button>`:`<button class="btn" onclick="marcarPago('${id}')">Marcar como pago</button>`}
+   ${wa?`<a class="btn ghost" style="margin-top:8px" href="${esc(wa)}" target="_blank" rel="noopener">Cobrar no WhatsApp</a>`:''}</div>`;
+}
+async function marcarPago(id){
+  const a=aluno(id),s=sitDe(a);if(!s||s.pago)return;
+  try{const r=await Q(sb.from('apice_pagamentos').insert({aluno_id:id,competencia:s.comp,valor:s.valor,marcado_por:S.user.id}).select().single());
+    (S.pags[id]=S.pags[id]||[]).push(r);rr();toast('Mensalidade marcada como paga')}
+  catch(e){toast(traduzErro(e))}
+}
+function desfazerPago(id){
+  const a=aluno(id),s=sitDe(a);if(!s||!s.pago)return;
+  confirmar('Desfazer pagamento?',`A mensalidade de ${a.nome} deste mês voltará a ficar em aberto.`,'Sim, desfazer',async()=>{
+    const {error}=await sb.from('apice_pagamentos').delete().eq('id',s.pago.id);if(error)throw error;
+    S.pags[id]=(S.pags[id]||[]).filter(x=>x.id!==s.pago.id);closeSheet();rr();toast('Pagamento desfeito')});
+}
+function resumoMensal(){
+  let p=0,ab=0;S.alunos.filter(a=>a.ativo!==false).forEach(a=>{const s=sitDe(a);if(s){if(s.pago)p++;else ab++}});
+  return p+ab?{p,ab}:null;
+}
+/* aluno */
+function mensalAlunoCard(a){
+  const s=sitDe(a);if(!s)return'';
+  const px=S.pix;
+  let corpo;
+  if(s.pago)corpo=`<p style="font-size:13px;color:var(--mute)">Obrigado! Sua mensalidade deste mês está em dia.</p>`;
+  else if(px&&px.pix_chave)corpo=`<div style="background:var(--s2);border-radius:14px;padding:12px;margin-bottom:10px"><small style="font-size:11px;color:var(--mute);display:block">Chave Pix · ${esc(pixTipoNome(px.pix_tipo))}</small>
+     <b style="font-size:15px;word-break:break-all;user-select:all" id="pix-chave-txt">${esc(pixMostra(px.pix_tipo,px.pix_chave))}</b>
+     <small style="font-size:12px;color:var(--mute);display:block;margin-top:4px">Quem recebe: ${esc(px.pix_nome||px.personal_nome||'seu personal')}</small></div>
+     <button class="btn ghost" style="margin-bottom:8px" onclick="copiarPix()">Copiar chave</button>
+     <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:10px">Pague no app do seu banco e depois toque em Já paguei.</p>
+     <button class="btn" data-paguei="1" onclick="jaPaguei(this)">Já paguei</button>`;
+  else corpo=`<p style="font-size:13px;color:var(--mute);margin-bottom:10px">Seu personal ainda não cadastrou a chave Pix.</p><button class="btn" data-paguei="1" onclick="jaPaguei(this)">Já paguei</button>`;
+  return`<div class="card" data-mensal="1" style="border-color:${s.estado==='atrasado'?'var(--red)':'var(--line)'}"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">Mensalidade</b><b style="font-size:20px">${esc(brl(s.valor))}</b></div>
+   <div style="display:flex;align-items:center;gap:8px;margin:8px 0 12px"><i class="dot" style="background:${s.cor};margin:0"></i><b style="font-size:13px;color:${s.cor}">${esc(s.txt)}</b>${s.pago?'':`<span style="font-size:12px;color:var(--mute)">· vencimento ${esc(fmtD(s.venc))}</span>`}</div>${corpo}</div>`;
+}
+function mensalAlunoTopo(a){const s=a&&sitDe(a);return s&&(s.estado==='atrasado'||((s.estado==='avencer'||s.estado==='hoje')&&s.dias<=5))?mensalAlunoCard(a):''}
+function mensalSheet(){
+  const a=S.alunos[0],c=a?mensalAlunoCard(a):'';
+  openSheet(`<h4>Minha mensalidade</h4>${c||'<p style="font-size:14px;color:var(--mute);line-height:1.5;margin-bottom:12px">Seu personal ainda não cadastrou uma mensalidade para você.</p>'}`);
+}
+async function copiarPix(){
+  const t=S.pix&&S.pix.pix_chave;if(!t)return;
+  try{await navigator.clipboard.writeText(t);toast('Chave copiada');return}catch(_){}
+  try{const e=$('pix-chave-txt'),r=document.createRange();r.selectNodeContents(e);const sl=getSelection();sl.removeAllRanges();sl.addRange(r);
+    const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0;font-size:16px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();
+    toast(ok?'Chave copiada':'Chave selecionada. Toque em Copiar.')}catch(_){toast('Selecione a chave para copiar')}
+}
+async function jaPaguei(btn){
+  const a=S.alunos[0],s=a&&sitDe(a);if(!s||s.pago)return;
+  if(btn){btn.disabled=true;btn.textContent='Aguarde…'}
+  try{const r=await Q(sb.from('apice_pagamentos').insert({aluno_id:a.id,competencia:s.comp,valor:s.valor,marcado_por:S.user.id}).select().single());
+    (S.pags[a.id]=S.pags[a.id]||[]).push(r);closeSheet();rr();toast('Pronto! Avisamos seu personal.');avisar('apice_pagamentos',r.id)}
+  catch(e){if(btn){btn.disabled=false;btn.textContent='Já paguei'}toast(traduzErro(e))}
 }
 const primeiro=n=>esc(String(n||'').trim().split(/\s+/)[0]);
 const V={};
@@ -855,6 +995,7 @@ function atencao(){
     const r=regsDe(a.id);const u=r[r.length-1];
     if(!u)L.push({c:'var(--forte)',id:a.id,t:`<b>${esc(a.nome)}</b> sem avaliação ainda`,s:'Registre a primeira avaliação (peso e medidas).'});
     else{const d=diasEntre(String(u.data).slice(0,10),h);if(d>=30)L.push({c:'var(--forte)',id:a.id,t:`<b>${esc(a.nome)}</b> sem avaliação há ${d} dias`,s:`Última em ${fmtD(u.data)}. Hora de reavaliar.`})}
+    {const s=sitDe(a);if(s&&s.estado==='atrasado')L.push({c:'var(--red)',id:a.id,t:`<b>${esc(a.nome)}</b>: mensalidade atrasada há ${s.dias} ${s.dias===1?'dia':'dias'}`,s:`${brl(s.valor)} com vencimento em ${fmtD(s.venc)}. Cobrar?`})}
     if(a.convidado_em&&!a.user_id)L.push({c:'var(--palco)',id:a.id,t:`<b>${esc(a.nome)}</b>: convite pendente`,s:`Enviado em ${fmtTs(a.convidado_em)}. Ainda não acessou o app.`});
   });
   return L;
@@ -872,6 +1013,7 @@ V.painel=()=>{
    <div class="kpi"><small>Alunos ativos</small><b>${ativos}</b><span style="color:var(--mute)">${S.alunos.length} cadastrados</span></div>
    <div class="kpi"><small>Avaliações (30 dias)</small><b>${av30}</b><span style="color:var(--mute)">registros de peso e medidas</span></div>
    <div class="kpi" style="grid-column:span 2"><small>Treinos registrados pelos alunos (7 dias)</small><b>${tr7}</b><span style="color:var(--mute)">feitos pelo app</span></div></div>
+  ${(()=>{const r=resumoMensal();return r?`<div class="card" style="margin-top:12px"><small style="font-size:11px;color:var(--mute)">Mensalidades do mês</small><div style="font-size:16px;font-weight:800;margin-top:4px"><span style="color:var(--base)">${r.p} ${r.p===1?'paga':'pagas'}</span> · <span style="color:${r.ab?'var(--red2)':'var(--mute)'}">${r.ab} em aberto</span></div></div>`:''})()}
   <div class="lbl">Precisa de atenção</div>
   ${at.length?at.map(x=>`<div class="alert" onclick="go({type:'aluno',id:'${esc(x.id)}'})"><i style="background:${x.c}"></i><div>${x.t}<small>${x.s}</small></div></div>`).join(''):'<div class="alert"><i style="background:var(--base)"></i><div><b>Tudo em dia</b><small>Nenhum aluno precisa de atenção agora.</small></div></div>'}
   <button class="btn" style="margin-top:14px" onclick="novoAluno()">${I.plus} Novo aluno</button>`;
@@ -952,6 +1094,7 @@ V.aluno=v=>{
   <div class="prof"><div class="av" style="border:2px solid ${lv.hex}">${esc(ini(a.nome))}</div><div><h3>${esc(a.nome)}</h3>
    <p>${[idd!=null?idd+' anos':'',a.altura?nf(a.altura,2)+' m':'',a.objetivo].filter(Boolean).map(esc).join(' · ')||'Sem dados complementares'}</p><div style="margin-top:6px">${badge(a.nivel)}</div></div></div>
   <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn ghost" style="height:42px;font-size:13px" onclick="alunoSheet('${esc(id)}')">Editar dados</button><button class="btn" style="height:42px;font-size:13px" onclick="avalSheet('${esc(id)}')">${I.plus} Nova avaliação</button></div>
+  ${mensalCardPersonal(a)}
   ${evolHTML(a)}
   <div class="lbl">Acesso ao app</div>
   <div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><i class="dot" style="background:${sc.c};margin:0"></i><b style="font-size:14px">${esc(sc.t)}</b></div>
@@ -1042,6 +1185,7 @@ V.hoje=()=>{
   <div class="hero" style="background:linear-gradient(140deg,#E5484D26,transparent 60%),var(--s1);cursor:default"><div style="display:flex;gap:16px;align-items:center">
    <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${R}" fill="none" stroke="#24272D" stroke-width="7"/><circle cx="37" cy="37" r="${R}" fill="none" stroke="#E5484D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 37 37)"/></svg><b>${feitos}/${dia.ex.length}</b></div>
    <div><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${dia.n.toUpperCase()} · ${LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${dia.f}</h4><p style="max-width:none">${prog.tempo}</p></div></div></div>
+  ${mensalAlunoTopo(a)}
   ${ja?`<div class="alert"><i style="background:var(--base)"></i><div><b>Você já treinou hoje</b><small>${esc(ja.treino)} registrado. Pode fazer outro se quiser.</small></div></div>`:''}
   <div class="grid2"><div class="kpi"><small>Sequência</small><b>${sequencia(a.id)} ${sequencia(a.id)===1?'dia':'dias'}</b><span style="color:var(--mute)">dias seguidos treinando</span></div>
    <div class="kpi"><small>Últimos 7 dias</small><b>${sem}</b><span style="color:var(--mute)">${sem===1?'treino registrado':'treinos registrados'}</span></div></div>
@@ -1146,6 +1290,7 @@ function alunoSheet(id){
    <div class="fld"><label>Nível</label><select id="al-nivel">${['base','forte','palco'].map(n=>`<option value="${n}" ${(a.nivel||'base')===n?'selected':''}>${LV[n].nome} · ${LV[n].sub}</option>`).join('')}</select></div></div>
   ${inp('al-obj','Objetivo',a.objetivo,'placeholder="Hipertrofia, emagrecimento, campeonato…"')}
   ${inp('al-meta','Meta de peso (kg)',a.meta_peso!=null?nf(a.meta_peso):'','inputmode="decimal" placeholder="75,0"')}
+  <div class="g3">${inp('al-mens','Mensalidade (R$)',a.mensalidade!=null?nf(a.mensalidade,2):'','inputmode="decimal" placeholder="150,00"')}${inp('al-venc','Dia do vencimento',a.vencimento_dia!=null?a.vencimento_dia:'','inputmode="numeric" maxlength="2" placeholder="10"')}</div>
   <div class="fld"><label>Anotação</label><textarea id="al-nota" placeholder="Observações do personal">${esc(a.nota||'')}</textarea></div>
   <div class="msg" id="msg"></div>
   <button class="btn" id="bt-al" onclick="salvarAluno('${id?esc(id):''}')">${id?'Salvar alterações':'Cadastrar aluno'}</button>
@@ -1158,7 +1303,11 @@ async function salvarAluno(id){
   const meta=pnum(val('al-meta'));
   if(Number.isNaN(alt)||(alt!=null&&(alt<0.5||alt>2.5))){msg('Altura inválida. Use metros, por exemplo 1,75.');return}
   if(Number.isNaN(meta)||(meta!=null&&(meta<20||meta>400))){msg('Meta de peso inválida.');return}
-  const row={nome,email:email||null,telefone:val('al-tel').trim()||null,nascimento:val('al-nasc')||null,altura:alt,sexo:val('al-sexo')||null,nivel:val('al-nivel'),objetivo:val('al-obj').trim()||null,meta_peso:meta,nota:val('al-nota').trim()||null};
+  const mens=pnum(val('al-mens').trim().replace(/\.(?=\d{3}(\D|$))/g,'')),vencS=val('al-venc').trim(),venc=vencS===''?null:Number(vencS);
+  if(Number.isNaN(mens)||(mens!=null&&(mens<=0||mens>99999))){msg('Mensalidade inválida. Exemplo: 150,00.');return}
+  if(venc!=null&&(!Number.isInteger(venc)||venc<1||venc>31)){msg('Dia do vencimento: de 1 a 31.');return}
+  if((mens==null)!==(venc==null)){msg('Para cobrar a mensalidade, preencha o valor e o dia do vencimento.');return}
+  const row={mensalidade:mens,vencimento_dia:venc,nome,email:email||null,telefone:val('al-tel').trim()||null,nascimento:val('al-nasc')||null,altura:alt,sexo:val('al-sexo')||null,nivel:val('al-nivel'),objetivo:val('al-obj').trim()||null,meta_peso:meta,nota:val('al-nota').trim()||null};
   msg('');busy('bt-al',true,'Salvando…');
   try{
     if(id){const r=await Q(sb.from('apice_alunos').update(row).eq('id',id).select().single());Object.assign(aluno(id),r);closeSheet();render();toast('Aluno atualizado');avisar('apice_alunos',id)}

@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-26-fichas",
+    "data": "2026-11-26",
+    "titulo": "Monte o treino de cada aluno",
+    "texto": "Na ficha do aluno, toque em Montar treino, escolha os exercícios (ou crie os seus), as séries, repetições, carga, descanso e observação. Salve como modelo e copie para outros alunos. O aluno recebe o aviso e treina pela ficha que você montou."
+  },
+  {
     "id": "2026-11-26-pix",
     "data": "2026-11-26",
     "titulo": "Mensalidade por Pix",

@@ -222,6 +222,35 @@ a.btn{text-decoration:none}
 .hist{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
 .hist:last-child{border-bottom:0}
 .hist small{color:var(--mute);display:block;margin-top:2px;line-height:1.4}
+.row .t small.obsx{display:block;color:var(--dim);margin-top:2px;white-space:normal;line-height:1.35}
+.fch{padding:10px 0;border-bottom:1px solid var(--line)}
+.fch:first-child{padding-top:2px}
+.fch .row{padding:0 0 10px;border-bottom:0}
+.fch-a{display:flex;gap:6px;flex-wrap:wrap}
+.fch-a .mini{min-width:40px;padding:0 12px}
+.fch-a .mini[disabled],.edx-b .mini[disabled]{opacity:.35}
+.edx{background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.edx-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.edx-h .t{flex:1;min-width:0;cursor:pointer}
+.edx-h .t b{font-size:14px;display:block;line-height:1.25}
+.edx-h .t small{font-size:11px;color:var(--mute)}
+.edx-b{display:flex;gap:4px;flex:none}
+.edx-b .mini{width:34px;padding:0;background:var(--s3)}
+.edx-g{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.edx .fld{margin-bottom:0}
+.edx .fld label{margin-bottom:4px;font-size:11px}
+.edx .fld input,.edx .fld select{background:var(--s1);height:44px;padding:0 12px}
+.edx-o{margin-top:8px}
+.stp{display:flex;align-items:center;justify-content:space-between;height:44px;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
+.stp button{width:44px;height:44px;font-size:22px;font-weight:700;color:var(--bone)}
+.stp b{font-size:16px}
+.mini-map{width:100%;height:100%;display:flex;justify-content:center;padding:2px 0}
+.mini-map svg{width:auto;height:100%}
+.exprop{display:flex;gap:16px;align-items:flex-start}
+.exprop .mp{width:22%;flex:none}
+.exprop .tx{flex:1;min-width:0;font-size:13px;line-height:1.55;color:var(--mute)}
+.exprop .tx b{color:var(--bone)}
+.exprop a{color:var(--red2);font-weight:700}
 </style>
 </head>
 <body>
@@ -377,7 +406,7 @@ async function apiEmail(body){
 const Q=async p=>{const r=await p;if(r.error)throw r.error;return r.data};
 
 /* ================= ESTADO ================= */
-const S={screen:'loading',user:null,perfil:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
+const S={screen:'loading',user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
   dia:null,feitos:{},aberto:null,cex:null,feel:'ok',recovery:false,pwdDone:false,boot:false,carregando:false,aviso:''};
 const eP=()=>S.perfil&&S.perfil.papel==='personal';
 const TABS={personal:[['painel','Painel'],['alunos','Alunos'],['treinos','Treinos'],['exerc','Exercícios']],
@@ -406,6 +435,25 @@ function sequencia(id){
   let n=0;while(set.has(d)){n++;d=addDias(d,-1)}
   return n;
 }
+
+/* ---- catálogo unificado, fichas e exercícios próprios ---- */
+const GRUPOS=['Pernas','Peito','Costas','Ombros','Braços','Abdômen','Corpo todo','Outro'];
+const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function exInfo(chave){
+  chave=String(chave==null?'':chave);
+  if(EX[chave]){const e=EX[chave];return{nome:e.nome,grupo:e.grupo,equip:e.equip,prim:e.prim,sec:e.sec,anim:true,proprio:false}}
+  if(chave.startsWith('p:')){
+    const p=S.exps.find(x=>x.id===chave.slice(2));
+    if(p)return{nome:p.nome,grupo:p.grupo||'',equip:p.equip||'',prim:(Array.isArray(p.musculos)?p.musculos:[]).filter(m=>NOMEM[m]),sec:[],anim:false,proprio:true,obs:p.obs||'',video:/^https:\/\/\S+$/i.test(p.video_url||'')?p.video_url:'',pid:p.id};
+    return{nome:'Exercício removido',grupo:'',equip:'',prim:[],sec:[],anim:false,proprio:true,removido:true,obs:'',video:''};
+  }
+  return{nome:'Exercício',grupo:'',equip:'',prim:[],sec:[],anim:false,proprio:false,removido:true,obs:'',video:''};
+}
+const exThumb=k=>{const i=exInfo(k);return i.anim?stageSVG(k,EX[k],true):`<div class="mini-map">${bodyMap('f',i.prim,i.sec)}</div>`};
+const exs=f=>Array.isArray(f&&f.exercicios)?f.exercicios:[];
+const fichasDe=id=>S.fichas.filter(f=>f.aluno_id===id).sort((a,b)=>((a.ordem||0)-(b.ordem||0))||String(a.criado||'').localeCompare(String(b.criado||'')));
+const modelos=()=>S.fichas.filter(f=>f.aluno_id==null).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+const letra=n=>n<26?String.fromCharCode(65+n):String(n+1);
 
 /* ================= SHEET / TOAST ================= */
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),2400)}
@@ -465,7 +513,7 @@ function chart(a){
 function cargaHist(id){
   const m={};
   trsDe(id).forEach(t=>{const d=String(t.data).slice(0,10);(Array.isArray(t.exercicios)?t.exercicios:[]).forEach(e=>{
-    const l=cargasFeitas(e);if(!l.length||!EX[e.chave])return;const v=Math.max(...l);
+    const l=cargasFeitas(e);if(!l.length||exInfo(e.chave).removido)return;const v=Math.max(...l);
     const o=m[e.chave]||(m[e.chave]={});if(o[d]==null||v>o[d])o[d]=v})});
   const out={};Object.keys(m).forEach(k=>{out[k]=Object.keys(m[k]).sort().map(d=>({d,v:m[k][d]}))});
   return out;
@@ -490,7 +538,7 @@ function cargaCard(a){
   if(!ks.length)corpo='<p style="font-size:13px;color:var(--mute);padding:10px 0 4px">Ainda não há cargas registradas.</p>';
   else{
     const k=ks.includes(S.cex)?S.cex:ks[0],ps=h[k],ini0=ps[0].v,fim=ps[ps.length-1].v,df=fim-ini0;
-    corpo=`<div class="chips" style="margin:10px 0">${ks.map(x=>`<button class="${x===k?'on':''}" onclick="S.cex='${x}';rr()">${esc(EX[x].nome)}</button>`).join('')}</div>
+    corpo=`<div class="chips" style="margin:10px 0">${ks.map(x=>`<button class="${x===k?'on':''}" onclick="S.cex='${x}';rr()">${esc(exInfo(x).nome)}</button>`).join('')}</div>
     <p style="font-size:12px;color:var(--mute);margin-bottom:6px">Maior carga por dia · agora <b style="color:var(--bone)">${esc(fmtKg(fim))}</b>${ps.length>1?` (${df>0?'+':''}${esc(String(Math.round(df*100)/100).replace('.',','))} kg desde o início)`:''}</p>${cargaChart(ps)}`;
   }
   return`<div class="card" id="cargaCard"><b style="font-size:15px">Evolução de carga</b>${corpo}</div>`;
@@ -505,19 +553,57 @@ function fakeEmail(b){
 function fakeGo(){
   const g=QS.get('go');if(!g)return;
   const [t,a,b]=g.split(':');
+  if(QS.get('noanim'))document.head.insertAdjacentHTML('beforeend','<style>.sheet{animation:none!important}</style>');
   if(t==='tab')setTab(a);
   else if(t==='aluno'){S.tab='alunos';S.stack=[{type:'aluno',id:a}];render()}
   else if(t==='ex'){S.stack=[{type:'ex',k:a,n:'forte'}];render()}
   else if(t==='aval'){S.tab='alunos';S.stack=[{type:'aluno',id:a}];render();avalSheet(a)}
   else if(t==='feito'){S.feitos={supino:{feito:true,carga:'82,5 kg'},desenvolvimento:{feito:true,carga:'40 kg'}};render()}
   else if(t==='feedback'){S.feitos={supino:{feito:true,carga:'82 kg'}};render();feedbackSheet()}
-  else if(t==='series'){render();const dia=PROG[nivelAluno()].dias[S.dia],k=dia.ex[0];S.aberto=k;rr();serieOk(k,0);if(!QS.get('noscroll'))setTimeout(()=>{const e=document.querySelector('.exw');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-120)},300)}
+  else if(t==='series'){render();const k=diaAtual().ex[0].id;S.aberto=k;rr();serieOk(k,0);if(!QS.get('noscroll'))setTimeout(()=>{const e=document.querySelector('.exw');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-120)},300)}
   else if(t==='cargas'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();if(!QS.get('noscroll'))setTimeout(()=>{const e=$('cargaCard');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-20)},300)}
-  else if(t==='timer'){(async()=>{render();const k=PROG[nivelAluno()].dias[S.dia].ex[0];serieOk(k,0);const L=[];L.push('barra='+$('rest').classList.contains('on')+' txt='+$('rest-t').textContent);
-    window.__dtOff=(REST_S[nivelAluno()]-30)*1000;tickRest();L.push('t30='+$('rest-t').textContent);restAdd(15);L.push('+15='+$('rest-t').textContent);
-    window.__dtOff=REST_S[nivelAluno()]*1000+16000;await new Promise(r=>setTimeout(r,400));L.push('fim barra='+$('rest').classList.contains('on')+' toast='+$('toast').textContent+' fimNull='+(REST.fim===null));
+  else if(t==='timer'){(async()=>{render();const k=diaAtual().ex[0].id,DS=diaAtual().ex[0].descanso;serieOk(k,0);const L=[];L.push('barra='+$('rest').classList.contains('on')+' txt='+$('rest-t').textContent);
+    window.__dtOff=(DS-30)*1000;tickRest();L.push('t30='+$('rest-t').textContent);restAdd(15);L.push('+15='+$('rest-t').textContent);
+    window.__dtOff=DS*1000+16000;await new Promise(r=>setTimeout(r,400));L.push('fim barra='+$('rest').classList.contains('on')+' toast='+$('toast').textContent+' fimNull='+(REST.fim===null));
     S.aberto=k;rr();L.push('resumo='+document.querySelector('.exw .t small').textContent);document.title='TIMER '+L.join(' | ')})()}
-  else if(t==='salvar'){(async()=>{render();const k=PROG[nivelAluno()].dias[S.dia].ex[0];S.aberto=k;rr();setSer(k,0,'carga','82,5');setSer(k,1,'carga','85');serieOk(k,0);serieOk(k,1);feedbackSheet();await salvarTreino();const e=S.ultRow.exercicios[0];document.title='SALVAR aluno='+S.ultRow.aluno_id+' chave='+e.chave+' feito='+e.feito+' carga='+e.carga+' series='+JSON.stringify(e.series)+' exerc_total='+S.ultRow.exercicios.length})()}
+  else if(t==='salvar'){(async()=>{render();const k=diaAtual().ex[0].id;S.aberto=k;rr();setSer(k,0,'carga','82,5');setSer(k,1,'carga','85');serieOk(k,0);serieOk(k,1);feedbackSheet();await salvarTreino();const e=S.ultRow.exercicios[0];document.title='SALVAR aluno='+S.ultRow.aluno_id+' chave='+e.chave+' feito='+e.feito+' carga='+e.carga+' series='+JSON.stringify(e.series)+' exerc_total='+S.ultRow.exercicios.length})()}
+  else if(t==='fichas'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();if(!QS.get('noscroll'))setTimeout(()=>{const e=$('fichasCard');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-60)},300)}
+  else if(t==='editor'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();editarFicha(fichasDe('a1')[0].id)}
+  else if(t==='seletor'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();editarFicha(fichasDe('a1')[0].id);edAdd()}
+  else if(t==='criarex'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();editarFicha(fichasDe('a1')[0].id);edAdd();crSheet('sel')}
+  else if(t==='modelos'){setTab('treinos')}
+  else if(t==='alunoficha'){S.dia=1;S.aberto='p:ex1';render();rr();if(!QS.get('noscroll'))setTimeout(()=>{const e=document.querySelector('.exw');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-120)},300)}
+  else if(t==='exprop'){S.stack=[{type:'ex',k:'p:ex1',n:'forte'}];render()}
+  else if(t==='testeficha'){(async()=>{const L=[];try{
+    S.tab='alunos';S.stack=[{type:'aluno',id:'a2'}];render();montarTreino('a2');
+    edAdd();selPick('agachamento');edAdd();selPick('p:ex1');S.ed.ex[0].reps='10';S.ed.ex[1].carga='30 kg';
+    await salvarFicha(false);await new Promise(r=>setTimeout(r,600));
+    const rows=await Q(sb.from('apice_fichas').select('*').eq('aluno_id','a2'));const r=rows[0];
+    L.push('linhas='+rows.length+' aluno_id_ok='+(r&&r.aluno_id==='a2')+' personal_ok='+(r&&r.personal_id==='p1')+' nome='+(r&&r.nome)+' exercicios.length='+(r&&r.exercicios.length)+' ex0='+JSON.stringify(r&&r.exercicios[0])+' ex1chave='+(r&&r.exercicios[1].chave));
+    const pu=(window.__push||[]).filter(x=>x.tabela==='apice_fichas');L.push('avisar='+pu.length+' tabela='+(pu[0]&&pu[0].tabela)+' novo='+(pu[0]&&pu[0].novo)+' id_ok='+(pu[0]&&pu[0].id===(r&&r.id)));
+    L.push('card='+/Treino A/.test($('fichasCard').innerHTML)+' toast='+$('toast').textContent);
+    montarTreino('a2');edAdd();selPick('rosca');$('ed-nome').value='Modelo X';S.ed.nome='Modelo X';await salvarFicha(true);await new Promise(r=>setTimeout(r,400));
+    const todas=await Q(sb.from('apice_fichas').select('*'));const mod=todas.filter(x=>x.aluno_id==null&&x.nome==='Modelo X');const pu2=(window.__push||[]).filter(x=>x.tabela==='apice_fichas');
+    L.push('comoModelo='+mod.length+' avisosTotal='+pu2.length+' (ficha+copia-modelo nao avisa)');
+    }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTEFICHA '+L.join(' | ')})()}
+  else if(t==='testecopia'){(async()=>{const L=[];try{
+    await aplicarModelo('m1','a2');await copiarDe('fi2','a2');await copiarTodas('a1','a3');
+    L.push('a2='+fichasDe('a2').map(f=>f.nome+':'+f.ordem).join(',')+' a3='+fichasDe('a3').map(f=>f.nome).join(','));
+    const b=fichasDe('a2')[1].id;await moverFicha(b,-1);L.push('apos mover='+fichasDe('a2').map(f=>f.nome+':'+f.ordem).join(','));
+    const bd=await Q(sb.from('apice_fichas').select('*').eq('aluno_id','a2'));L.push('banco a2='+bd.map(f=>f.nome+':'+f.ordem).sort().join(','));
+    await sb.from('apice_fichas').delete().eq('id',b);S.fichas=S.fichas.filter(f=>f.id!==b);L.push('apos excluir='+fichasDe('a2').length);
+    L.push('modelos='+modelos().length+' aluno-nao-ve-modelos');
+    }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTECOPIA '+L.join(' | ')})()}
+  else if(t==='testealunoficha'){(async()=>{const L=[];try{
+    render();L.push('abas='+[...document.querySelectorAll('.chips button')].map(b=>b.textContent).join('/'));
+    L.push('prescr='+document.querySelector('.exw .t small b').textContent+' obs1='+(document.querySelector('.exw .t small.obsx')||{}).textContent+' geral='+((document.querySelector('.alert small')||{}).textContent||'').slice(0,30));
+    S.dia=1;S.feitos={};S.aberto='p:ex1';render();
+    const ins=[...document.querySelectorAll('.sers .sin')];
+    L.push('cadeira: nSeries='+document.querySelectorAll('.sers .ser').length+' reps0='+ins[0].value+' carga0='+ins[1].value+' nome='+document.querySelector('.exw .t b').textContent);
+    serieOk('p:ex1',0);L.push('descanso='+$('rest-t').textContent+' (ficha=60s, padrao forte=90s)');
+    S.aberto='agachamento';rr();const i2=[...document.querySelectorAll('.sers .sin')];L.push('agach: reps0='+i2[0].value+' carga0='+i2[1].value+' series='+document.querySelectorAll('.sers .ser').length);
+    feedbackSheet();await salvarTreino();const u=S.ultRow;L.push('treino='+u.treino+' ex='+u.exercicios.map(e=>e.chave+(e.feito?'*':'')).join(','));
+    }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTEALUNOFICHA '+L.join(' | ')})()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
   else if(t==='perfil'){perfilSheet()}
@@ -554,7 +640,7 @@ function makeFake(kind){
   let cur=kind==='personal'||kind==='vazio'?P:kind==='aluno'?U:null;
   const db={
    apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal',pix_tipo:'email',pix_chave:'brenno@exemplo.com',pix_nome:'Brenno Assis'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
-   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[]};
+   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[],apice_fichas:[],apice_exercicios:[]};
   if(kind!=='vazio'){
    db.apice_alunos=[
     {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,mensalidade:150,vencimento_dia:10,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
@@ -573,8 +659,17 @@ function makeFake(kind){
      {chave:'supino',feito:true,carga:mx(sp),series:sr(sp,8)},{chave:'desenvolvimento',feito:true,carga:mx(ds),series:sr(ds,10)},{chave:'terra',feito:true,carga:mx(te),series:sr(te,6)}],
      feedback:i===4?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z'}));
    db.apice_treinos_feitos.push({id:'fx',aluno_id:'a1',data:ago(30),treino:'Treino C',exercicios:[{chave:'supino',feito:true,carga:'67,5 kg'},{chave:'agachamento',feito:true,carga:'100 kg'}],feedback:'Ok',criado:ago(30)+'T19:00:00Z'});
+   const it=(chave,series,reps,carga,descanso,obs)=>({chave,series,reps,carga:carga||null,descanso:descanso||null,obs:obs||null});
+   db.apice_exercicios=[{id:'ex1',personal_id:'p1',nome:'Cadeira extensora',grupo:'Pernas',musculos:['quadriceps'],equip:'Máquina',obs:'Ajuste o encosto para o joelho ficar alinhado com o eixo da máquina.',video_url:'https://www.youtube.com/watch?v=exemplo',criado:ago(20)+'T10:00:00Z'}];
+   db.apice_fichas=[
+    {id:'m1',personal_id:'p1',aluno_id:null,nome:'Full body iniciante',foco:'Corpo inteiro',ordem:0,exercicios:[it('agachamento',3,'12'),it('supino',3,'12'),it('remada',3,'12'),it('prancha',3,'30 s')],obs:'Descanse 1 minuto entre as séries.',criado:ago(15)+'T10:00:00Z'},
+    {id:'m2',personal_id:'p1',aluno_id:null,nome:'Empurrar (peito, ombro e tríceps)',foco:'Peito, ombro e tríceps',ordem:0,exercicios:[it('supino',4,'8–10'),it('desenvolvimento',3,'10'),it('triceps',3,'12')],obs:null,criado:ago(14)+'T10:00:00Z'},
+    {id:'fi1',personal_id:'p1',aluno_id:'a1',nome:'Treino A',foco:'Peito, ombro e tríceps',ordem:0,exercicios:[it('supino',4,'8–10','80 kg',90,'Descida em 3 segundos, sem quicar'),it('desenvolvimento',3,'10','40 kg',75),it('triceps',3,'12')],obs:'Aqueça 10 min na esteira antes de começar.',criado:ago(12)+'T10:00:00Z'},
+    {id:'fi2',personal_id:'p1',aluno_id:'a1',nome:'Treino B',foco:'Pernas',ordem:1,exercicios:[it('agachamento',4,'10','100 kg',120),it('p:ex1',3,'12','45 kg',60,'Segure 1 segundo no topo'),it('panturrilha',4,'15',null,45)],obs:'Foque na técnica, sem pressa.',criado:ago(12)+'T10:01:00Z'}];
   }
   const vis=(t,r)=>{
+    if(t==='apice_fichas')return !!cur&&(r.personal_id===cur.id||db.apice_alunos.some(a=>a.id===r.aluno_id&&a.user_id===cur.id));
+    if(t==='apice_exercicios')return !!cur&&(r.personal_id===cur.id||db.apice_alunos.some(a=>a.user_id===cur.id&&a.personal_id===r.personal_id));
     const ids=db.apice_alunos.filter(a=>cur&&(a.personal_id===cur.id||a.user_id===cur.id)).map(a=>a.id);
     if(t==='apice_alunos')return ids.includes(r.id);
     if(t==='apice_perfis')return cur&&r.id===cur.id;
@@ -706,7 +801,7 @@ async function sair(){
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
-function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
+function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
 
 /* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
 function iniciar(){
@@ -746,7 +841,9 @@ async function carregarTudo(){
     S.alunos=await Q(sb.from('apice_alunos').select('*').order('nome'));
     const rg=await Q(sb.from('apice_registros').select('*').order('data'));
     const tr=await Q(sb.from('apice_treinos_feitos').select('*').order('data',{ascending:false}));
-    S.pags={};S.pix=null;
+    S.pags={};S.pix=null;S.fichas=[];S.exps=[];
+    try{S.fichas=await Q(sb.from('apice_fichas').select('*').order('ordem'))||[]}catch(_){S.fichas=[]}
+    try{S.exps=await Q(sb.from('apice_exercicios').select('*').order('nome'))||[]}catch(_){S.exps=[]}
     try{const pg=await Q(sb.from('apice_pagamentos').select('*').order('competencia'));pg.forEach(r=>{(S.pags[r.aluno_id]=S.pags[r.aluno_id]||[]).push(r)})}catch(_){}
     if(p.papel!=='personal'){try{const px=await Q(sb.rpc('apice_pix_do_meu_personal'));S.pix=Array.isArray(px)?px[0]||null:px||null}catch(_){S.pix=null}}
     S.regs={};S.trs={};S.alunos.forEach(a=>{S.regs[a.id]=[];S.trs[a.id]=[]});
@@ -1094,6 +1191,8 @@ V.aluno=v=>{
   <div class="prof"><div class="av" style="border:2px solid ${lv.hex}">${esc(ini(a.nome))}</div><div><h3>${esc(a.nome)}</h3>
    <p>${[idd!=null?idd+' anos':'',a.altura?nf(a.altura,2)+' m':'',a.objetivo].filter(Boolean).map(esc).join(' · ')||'Sem dados complementares'}</p><div style="margin-top:6px">${badge(a.nivel)}</div></div></div>
   <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn ghost" style="height:42px;font-size:13px" onclick="alunoSheet('${esc(id)}')">Editar dados</button><button class="btn" style="height:42px;font-size:13px" onclick="avalSheet('${esc(id)}')">${I.plus} Nova avaliação</button></div>
+  <div class="lbl" style="margin-top:4px">Treino do aluno</div>
+  ${treinoAlunoCard(a)}
   ${mensalCardPersonal(a)}
   ${evolHTML(a)}
   <div class="lbl">Acesso ao app</div>
@@ -1101,12 +1200,18 @@ V.aluno=v=>{
    <p style="font-size:12px;color:var(--mute);margin-bottom:12px">${a.email?'E-mail: '+esc(a.email):'Cadastre o e-mail do aluno para poder convidar.'}</p>
    <button class="btn" id="bt-conv" ${a.email?'':'disabled'} onclick="convidar('${esc(id)}')">${a.user_id?'Reenviar acesso':a.convidado_em?'Reenviar convite':'Convidar para o app'}</button>
    ${wa?`<a class="btn ghost" style="margin-top:8px" href="${esc(wa)}" target="_blank" rel="noopener">Avisar pelo WhatsApp</a>`:'<p style="font-size:12px;color:var(--dim);margin-top:8px">Cadastre o WhatsApp para enviar o aviso.</p>'}</div>
-  <div class="lbl">Treino atual</div>
-  <div class="hero" style="background:linear-gradient(135deg,${lv.hex}22,transparent 60%),var(--s1)" onclick="go({type:'prog',n:'${esc(a.nivel)}'})"><span class="step">${lv.sub.toUpperCase()}</span><h4 style="font-size:22px">${prog.titulo}</h4><p>${prog.freq} · ${prog.tempo}</p></div>
   <div class="lbl">Treinos feitos pelo aluno</div>
   <div class="card" style="padding:4px 16px">${hist.length?hist.map(histTreino).join(''):'<p style="font-size:13px;color:var(--mute);padding:12px 0">Nenhum treino registrado ainda.</p>'}</div>
   ${a.nota?`<div class="lbl">Anotação</div><div class="card note">${esc(a.nota)}</div>`:''}`;
 };
+function treinoAlunoCard(a){
+  const fs=fichasDe(a.id),id=esc(a.id),lv=LV[a.nivel]||LV.base;
+  const lista=fs.length?fs.map((f,i)=>{const fid=esc(f.id),n=exs(f).length;
+    return`<div class="fch"><div class="row" onclick="editarFicha('${fid}')"><div class="t"><b>${esc(f.nome)}</b><small>${esc(f.foco||'Sem foco definido')} · ${n} ${n===1?'exercício':'exercícios'}</small></div><span class="chev">${I.chev}</span></div>
+     <div class="fch-a"><button class="mini" ${i?'':'disabled'} onclick="moverFicha('${fid}',-1)" aria-label="Subir">↑</button><button class="mini" ${i<fs.length-1?'':'disabled'} onclick="moverFicha('${fid}',1)" aria-label="Descer">↓</button><button class="mini" onclick="editarFicha('${fid}')">Editar</button><button class="mini red" onclick="excluirFicha('${fid}')">Excluir</button></div></div>`}).join('')
+   :`<p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Este aluno está no programa padrão do nível ${esc(lv.nome)}. <a style="color:var(--red2);font-weight:700;cursor:pointer" onclick="go({type:'prog',n:'${esc(a.nivel)}'})">Ver programa</a></p>`;
+  return`<div class="card" id="fichasCard">${lista}<div style="display:flex;gap:8px;${fs.length?'margin-top:12px':''}"><button class="btn" style="height:46px;font-size:14px" onclick="montarTreino('${id}')">${I.plus} Montar treino</button><button class="btn ghost" style="height:46px;font-size:14px" onclick="copiarDeSheet('${id}')">Copiar de…</button></div></div>`;
+}
 function histTreino(t){
   const ex=Array.isArray(t.exercicios)?t.exercicios:[],f=ex.filter(e=>e.feito).length;
   return`<div class="hist"><div style="display:flex;justify-content:space-between"><b>${esc(t.treino||'Treino')}</b><span style="color:var(--mute)">${fmtD(t.data)}</span></div><small>${f} de ${ex.length} exercícios${t.feedback?' · '+esc(t.feedback):''}</small></div>`;
@@ -1126,11 +1231,19 @@ async function convidar(id){
 }
 
 /* ---- treinos / programas / exercícios ---- */
-V.treinos=()=>`<div class="hd"><div><p>Programas por nível</p><h2>Treinos</h2></div>${avBtn()}</div>
+function modelosCard(){
+  const l=modelos();
+  const corpo=l.length?l.map(f=>{const fid=esc(f.id),n=exs(f).length;return`<div class="fch"><div class="row" onclick="editarFicha('${fid}')"><div class="t"><b>${esc(f.nome)}</b><small>${esc(f.foco||'Sem foco definido')} · ${n} ${n===1?'exercício':'exercícios'}</small></div><span class="chev">${I.chev}</span></div>
+    <div class="fch-a"><button class="mini" onclick="aplicarSheet('${fid}')">Aplicar a aluno…</button><button class="mini" onclick="editarFicha('${fid}')">Editar</button><button class="mini red" onclick="excluirFicha('${fid}')">Excluir</button></div></div>`}).join('')
+   :'<p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:6px">Nenhum modelo ainda. Ao montar o treino de um aluno, toque em Salvar também como modelo para reaproveitar com outros alunos.</p>';
+  return`<div class="lbl">Meus modelos</div><div class="card" id="modelosCard">${corpo}<button class="btn ghost" style="height:46px;font-size:14px;margin-top:${l.length?12:8}px" onclick="novoModelo()">${I.plus} Novo modelo</button></div>`;
+}
+V.treinos=()=>`<div class="hd"><div><p>Modelos e programas por nível</p><h2>Treinos</h2></div>${avBtn()}</div>
+  ${modelosCard()}<div class="lbl">Programas padrão</div>
   ${['base','forte','palco'].map((n,i)=>{const p=PROG[n],l=LV[n];return`<div class="hero" style="background:linear-gradient(140deg,${l.hex}26 0%,transparent 55%),var(--s1)" onclick="go({type:'prog',n:'${n}'})">
     <span class="step">NÍVEL ${i+1} DE 3</span><div style="font-size:12px;font-weight:700;color:${l.hex};letter-spacing:.1em;text-transform:uppercase">${l.sub}</div>
     <h4>${l.nome}</h4><p>${p.desc}</p><div class="meta"><span>${p.freq}</span><span style="color:var(--dim)">·</span><span>${p.dur}</span></div></div>`}).join('')}
-  <p style="font-size:12px;color:var(--dim);line-height:1.5;margin-top:4px">Cada aluno segue o programa do nível dele (Base, Forte ou Palco).</p>`;
+  <p style="font-size:12px;color:var(--dim);line-height:1.5;margin-top:4px">Quem não tem treino montado por você segue o programa do nível dele (Base, Forte ou Palco).</p>`;
 V.prog=v=>{
   const p=PROG[v.n]||PROG.base,l=LV[v.n]||LV.base;
   return`<button class="back" onclick="back()">${I.back} Voltar</button>
@@ -1140,9 +1253,29 @@ V.prog=v=>{
   <div class="prescr" style="margin-bottom:16px"><div><small>Frequência</small><b>${p.freq.replace(' por semana','/sem')}</b></div><div><small>Duração</small><b>${p.dur.split(' ')[0]} sem</b></div><div><small>Sessão</small><b>${p.tempo.split(' ')[0]} min</b></div></div>
   ${p.dias.map(d=>`<div class="day"><div class="day-h"><div><b>${d.n}</b><small style="display:block">${d.f}</small></div><small>${d.ex.length} exercícios</small></div><div class="day-b">${d.ex.map(k=>exRow(k,v.n)).join('')}</div></div>`).join('')}`;
 };
-function exRow(k,nivel){const e=EX[k];return`<div class="row ex-row" onclick="go({type:'ex',k:'${k}',n:'${nivel||''}'})"><div class="thumb">${stageSVG(k,e,true)}</div><div class="t"><b>${e.nome}</b><small>${nivel?`<b>${e.pres[nivel]}</b> · `:''}${e.grupo} · ${e.equip}</small></div><span class="chev">${I.chev}</span></div>`}
+function exRow(k,nivel){const i=exInfo(k),e=EX[k];return`<div class="row ex-row" onclick="go({type:'ex',k:'${esc(k)}',n:'${nivel||''}'})"><div class="thumb">${exThumb(k)}</div><div class="t"><b>${esc(i.nome)}</b><small>${nivel&&e?`<b>${e.pres[nivel]}</b> · `:''}${esc(i.grupo)}${i.equip?' · '+esc(i.equip):''}${i.proprio?' · seu exercício':''}</small></div><span class="chev">${I.chev}</span></div>`}
+function fichaRow(it,i){const inf=exInfo(it.chave),n=Number(it.series)||0;
+  return`<div class="row ex-row" onclick="go({type:'ex',k:'${esc(it.chave)}',n:''})"><div class="thumb">${exThumb(it.chave)}</div><div class="t"><b>${esc(inf.nome)}</b><small><b>${n} × ${esc(it.reps||'')}</b>${it.carga?' · '+esc(it.carga):''}${Number(it.descanso)>0?' · desc. '+esc(it.descanso)+' s':''}</small>${it.obs?`<small class="obsx">${esc(it.obs)}</small>`:''}</div><span class="chev">${I.chev}</span></div>`}
+V.fichaver=()=>{
+  const a=S.alunos[0],fs=a?fichasDe(a.id):[];
+  return`<button class="back" onclick="back()">${I.back} Voltar</button>
+  <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin:4px 0 14px">Meu treino</h2>
+  ${fs.map(f=>`<div class="day"><div class="day-h"><div><b>${esc(f.nome)}</b><small style="display:block">${esc(f.foco||'')}</small></div><small>${exs(f).length} exercícios</small></div><div class="day-b">${f.obs?`<p class="note" style="padding:12px 0;border-bottom:1px solid var(--line)">${esc(f.obs)}</p>`:''}${exs(f).map(fichaRow).join('')}</div></div>`).join('')||'<p class="note">Nenhuma ficha ainda.</p>'}`;
+};
+function exPropHTML(v,inf){
+  const nm=m=>NOMEM[m];
+  return`<button class="back" onclick="back()">${I.back} Voltar</button>
+  <div style="font-size:12px;color:var(--mute);font-weight:600">${esc(inf.grupo)}${inf.equip?' · '+esc(inf.equip):''}</div>
+  <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 12px">${esc(inf.nome)}</h2>
+  <div class="card"><div class="exprop"><div class="mp">${bodyMap('f',inf.prim,[])}<div class="cap">Frente</div></div>
+   <div class="tx"><b>Músculos trabalhados</b><br>${inf.prim.length?esc(inf.prim.map(nm).join(', ')):'Não informado'}
+   ${inf.obs?`<br><br><b>Como fazer</b><br>${esc(inf.obs)}`:''}
+   ${inf.video?`<br><br><a href="${esc(inf.video)}" target="_blank" rel="noopener noreferrer">Ver vídeo</a>`:''}</div></div></div>
+  ${eP()&&inf.pid?`<div style="display:flex;gap:8px"><button class="btn ghost" style="height:44px;font-size:14px" onclick="crSheet('tab','${esc(inf.pid)}')">Editar exercício</button><button class="btn ghost" style="height:44px;font-size:14px;color:var(--red2)" onclick="excluirExProprio('${esc(inf.pid)}')">Excluir</button></div>`:''}`;
+}
 V.ex=v=>{
   const e=EX[v.k];
+  if(!e)return exPropHTML(v,exInfo(v.k));
   return`<button class="back" onclick="back()">${I.back} Voltar</button>
   <div style="font-size:12px;color:var(--mute);font-weight:600">${e.grupo} · ${e.equip}</div>
   <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 12px">${e.nome}</h2>
@@ -1159,13 +1292,14 @@ V.ex=v=>{
   <div class="warn"><b>Erro comum:</b> ${e.erro}</div>`;
 };
 V.exerc=()=>{
-  const lista=Object.keys(EX).filter(k=>!S.muscle||EX[k].prim.includes(S.muscle)||EX[k].sec.includes(S.muscle));
+  const lista=Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)).filter(k=>{const i=exInfo(k);return !S.muscle||i.prim.includes(S.muscle)||i.sec.includes(S.muscle)});
   return`<div class="hd"><div><p>Toque no músculo para filtrar</p><h2>Exercícios</h2></div>${avBtn()}</div>
   <div class="card" style="padding:12px"><div class="seg2"><button class="${S.side==='f'?'on':''}" onclick="S.side='f';render()">Frente</button><button class="${S.side==='b'?'on':''}" onclick="S.side='b';render()">Costas</button></div>
    <div style="width:58%;margin:0 auto">${bodyMap(S.side,[],[],true,S.muscle)}</div>
    ${S.muscle?`<div style="display:flex;justify-content:center;margin-top:8px"><button class="badge" style="background:var(--redbg);color:var(--red2);font-size:12px;padding:6px 12px" onclick="S.muscle=null;render()">${NOMEM[S.muscle]} ✕</button></div>`:''}</div>
   <div class="lbl">${lista.length} exercícios${S.muscle?' para '+NOMEM[S.muscle].toLowerCase():''}</div>
-  <div class="card" style="padding:4px 16px">${lista.length?lista.map(k=>exRow(k)).join(''):'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p>'}</div>`;
+  <div class="card" style="padding:4px 16px">${lista.length?lista.map(k=>exRow(k)).join(''):'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p>'}</div>
+  ${eP()?`<button class="btn ghost" onclick="crSheet('tab')">${I.plus} Criar meu exercício</button>`:''}`;
 };
 
 /* ---- aluno: hoje ---- */
@@ -1173,34 +1307,35 @@ V.hoje=()=>{
   const a=S.alunos[0];
   const head=`<div class="hd"><div><p>${esc(dataLonga())}</p><h2>Bora, ${primeiro(S.perfil.nome)}</h2></div>${avBtn()}</div>`;
   if(!a)return head+semAluno();
-  const nivel=LV[a.nivel]?a.nivel:'base',prog=PROG[nivel],trs=trsDe(a.id);
-  if(S.dia==null){const l=trs[0],i=l?prog.dias.findIndex(d=>d.n===l.treino):-1;S.dia=i<0?0:(i+1)%prog.dias.length}
-  const dia=prog.dias[S.dia]||prog.dias[0];
-  const feitos=dia.ex.filter(k=>S.feitos[k]&&S.feitos[k].feito).length,pct=feitos/dia.ex.length,R=31,C=2*Math.PI*R;
+  const nivel=LV[a.nivel]?a.nivel:'base',pl=plano(),trs=trsDe(a.id);
+  if(S.dia==null){const l=trs[0],i=l?pl.dias.findIndex(d=>d.n===l.treino):-1;S.dia=i<0?0:(i+1)%pl.dias.length}
+  const dia=diaAtual(),tot=dia.ex.length||1;
+  const feitos=dia.ex.filter(it=>S.feitos[it.id]&&S.feitos[it.id].feito).length,pct=feitos/tot,R=31,C=2*Math.PI*R;
   const ja=trs.find(t=>String(t.data).slice(0,10)===hoje());
   const lim7=addDias(hoje(),-7),sem=trs.filter(t=>String(t.data).slice(0,10)>=lim7).length;
   const ultCarga=k=>{for(const t of trs){const e=(t.exercicios||[]).find(x=>x.chave===k&&x.carga);if(e)return e.carga}return''};
   return head+`
-  <div class="chips">${prog.dias.map((d,i)=>`<button class="${S.dia===i?'on':''}" onclick="S.dia=${i};S.feitos={};S.aberto=null;render()">${d.n}</button>`).join('')}</div>
+  <div class="chips">${pl.dias.map((d,i)=>`<button class="${S.dia===i?'on':''}" onclick="S.dia=${i};S.feitos={};S.aberto=null;render()">${esc(d.n)}</button>`).join('')}</div>
   <div class="hero" style="background:linear-gradient(140deg,#E5484D26,transparent 60%),var(--s1);cursor:default"><div style="display:flex;gap:16px;align-items:center">
    <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${R}" fill="none" stroke="#24272D" stroke-width="7"/><circle cx="37" cy="37" r="${R}" fill="none" stroke="#E5484D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 37 37)"/></svg><b>${feitos}/${dia.ex.length}</b></div>
-   <div><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${dia.n.toUpperCase()} · ${LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${dia.f}</h4><p style="max-width:none">${prog.tempo}</p></div></div></div>
+   <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${esc(dia.n.toUpperCase())}${pl.ficha?'':' · '+LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${esc(dia.f||dia.n)}</h4><p style="max-width:none">${esc(pl.ficha?dia.ex.length+(dia.ex.length===1?' exercício':' exercícios'):pl.tempo)}</p></div></div></div>
   ${mensalAlunoTopo(a)}
+  ${dia.obs?`<div class="alert" style="cursor:default"><i style="background:var(--palco)"></i><div><b>Recado do seu personal</b><small style="color:#CFCAC1">${esc(dia.obs)}</small></div></div>`:''}
   ${ja?`<div class="alert"><i style="background:var(--base)"></i><div><b>Você já treinou hoje</b><small>${esc(ja.treino)} registrado. Pode fazer outro se quiser.</small></div></div>`:''}
   <div class="grid2"><div class="kpi"><small>Sequência</small><b>${sequencia(a.id)} ${sequencia(a.id)===1?'dia':'dias'}</b><span style="color:var(--mute)">dias seguidos treinando</span></div>
    <div class="kpi"><small>Últimos 7 dias</small><b>${sem}</b><span style="color:var(--mute)">${sem===1?'treino registrado':'treinos registrados'}</span></div></div>
-  <div class="lbl">Exercícios <a onclick="go({type:'prog',n:'${nivel}'})">ver programa</a></div>
-  <div class="card" style="padding:4px 16px">${dia.ex.map(k=>{const e=EX[k],f=ensureSer(k,nivel),uc=ultCarga(k),op=S.aberto===k,pr=parsePres(e.pres[nivel]),nS=f.series.filter(x=>x.feito).length,mx=maxCarga(f.series.filter(x=>x.feito));
+  <div class="lbl">Exercícios <a onclick="${pl.ficha?`go({type:'fichaver'})`:`go({type:'prog',n:'${nivel}'})`}">ver programa</a></div>
+  <div class="card" style="padding:4px 16px">${dia.ex.map(it=>{const k=it.id,ik=esc(k),inf=exInfo(it.k),f=ensureSer(k),uc=ultCarga(it.k),op=S.aberto===k,nS=f.series.filter(x=>x.feito).length,mx=maxCarga(f.series.filter(x=>x.feito));
    const resumo=nS?` · ${nS}/${f.series.length} séries${mx!=null?' · '+fmtKg(mx):''}`:(uc?' · última: '+esc(uc):'');
-   return`<div class="exw"><div class="row" style="cursor:default"><button class="check ${f.feito?'on':''}" onclick="toggleEx('${k}')" aria-label="Marcar">${f.feito?I.ok:''}</button>
-   <div class="thumb" onclick="go({type:'ex',k:'${k}',n:'${nivel}'})">${stageSVG(k,e,true)}</div>
-   <div class="t" style="cursor:pointer" onclick="abrirEx('${k}')"><b style="${f.feito?'color:var(--mute);text-decoration:line-through':''}">${e.nome}</b><small><b>${e.pres[nivel]}</b>${resumo}</small></div>
-   <span style="color:var(--dim);transform:rotate(${op?90:0}deg);display:grid" onclick="abrirEx('${k}')">${I.chev}</span></div>
-   ${op?`<div class="sers"><div class="sh"><span></span><span>${pr.seg?'Segundos':'Reps'}</span><span>Carga (kg)</span><span></span></div>${f.series.map((x,n)=>`<div class="ser ${x.feito?'ok':''}"><span>${n+1}ª</span><input class="sin" inputmode="${pr.seg?'numeric':'decimal'}" value="${esc(x.reps)}" placeholder="${pr.seg?'s':'reps'}" oninput="setSer('${k}',${n},'reps',this.value)" aria-label="Repetições da série ${n+1}"><input class="sin" inputmode="decimal" value="${esc(x.carga)}" placeholder="kg" oninput="setSer('${k}',${n},'carga',this.value)" aria-label="Carga da série ${n+1}"><button class="sok ${x.feito?'on':''}" onclick="serieOk('${k}',${n})" aria-label="Série ${n+1} feita">✓</button></div>`).join('')}</div>`:''}</div>`}).join('')}</div>
+   return`<div class="exw"><div class="row" style="cursor:default"><button class="check ${f.feito?'on':''}" onclick="toggleEx('${ik}')" aria-label="Marcar">${f.feito?I.ok:''}</button>
+   <div class="thumb" onclick="go({type:'ex',k:'${esc(it.k)}',n:'${nivel}'})">${exThumb(it.k)}</div>
+   <div class="t" style="cursor:pointer" onclick="abrirEx('${ik}')"><b style="${f.feito?'color:var(--mute);text-decoration:line-through':''}">${esc(inf.nome)}</b><small><b>${esc(it.pres)}</b>${resumo}</small>${it.obs?`<small class="obsx">${esc(it.obs)}</small>`:''}</div>
+   <span style="color:var(--dim);transform:rotate(${op?90:0}deg);display:grid" onclick="abrirEx('${ik}')">${I.chev}</span></div>
+   ${op?`<div class="sers"><div class="sh"><span></span><span>${it.seg?'Segundos':'Reps'}</span><span>Carga (kg)</span><span></span></div>${f.series.map((x,n)=>`<div class="ser ${x.feito?'ok':''}"><span>${n+1}ª</span><input class="sin" inputmode="${it.seg?'numeric':'decimal'}" value="${esc(x.reps)}" placeholder="${it.seg?'s':'reps'}" oninput="setSer('${ik}',${n},'reps',this.value)" aria-label="Repetições da série ${n+1}"><input class="sin" inputmode="decimal" value="${esc(x.carga)}" placeholder="kg" oninput="setSer('${ik}',${n},'carga',this.value)" aria-label="Carga da série ${n+1}"><button class="sok ${x.feito?'on':''}" onclick="serieOk('${ik}',${n})" aria-label="Série ${n+1} feita">✓</button></div>`).join('')}</div>`:''}</div>`}).join('')}</div>
   <button class="btn" onclick="feedbackSheet()" ${feitos?'':'disabled'}>Concluir treino</button>
   ${trs.length?`<div class="lbl">Últimos treinos</div><div class="card" style="padding:4px 16px">${trs.slice(0,5).map(histTreino).join('')}</div>`:''}`;
 };
-/* ---- séries, descanso ---- */
+/* ---- plano do aluno: fichas do personal ou programa padrão do nível ---- */
 const REST_S={base:60,forte:90,palco:120};
 function parsePres(t){
   t=String(t||'');const m=t.match(/^\s*(\d+)\s*[×x]\s*(\d+)(?:\s*[–-]\s*\d+)?\s*(s\b)?/i);
@@ -1214,31 +1349,44 @@ function cargasFeitas(e){/* números das séries feitas; treino antigo (sem seri
   if(Array.isArray(e.series))return e.series.filter(x=>x.feito).map(x=>cargaN(x.carga)).filter(n=>n!=null);
   const n=e.feito?cargaN(e.carga):null;return n!=null?[n]:[];
 }
-function ensureSer(k,nivel){
-  const f=S.feitos[k]||(S.feitos[k]={});
+const nivelAluno=()=>S.alunos[0]&&LV[S.alunos[0].nivel]?S.alunos[0].nivel:'base';
+function itemProg(k,nivel){const pres=EX[k].pres[nivel],pr=parsePres(pres);return{id:k,k,pres,n:pr.n,alvo:pr.alvo,seg:pr.seg,carga:'',descanso:REST_S[nivel]||60,obs:''}}
+function itemFicha(x,usados,nivel){
+  const k=String(x.chave||''),c=usados[k]=(usados[k]||0)+1,n=Math.min(12,Math.max(1,Math.round(Number(x.series))||3)),reps=String(x.reps==null?'':x.reps).trim();
+  return{id:c>1?k+'#'+c:k,k,pres:n+' × '+(reps||'—'),n,alvo:(reps.match(/\d+/)||[''])[0],seg:/\d\s*(s|seg|segundos?)\b/i.test(reps),carga:x.carga||'',descanso:Number(x.descanso)>0?Number(x.descanso):(REST_S[nivel]||60),obs:x.obs||''};
+}
+function plano(){
+  const a=S.alunos[0],nivel=nivelAluno(),fs=a?fichasDe(a.id):[];
+  if(fs.length)return{ficha:true,tempo:'',dias:fs.map(f=>{const u={};return{n:f.nome,f:f.foco||'',obs:f.obs||'',ex:exs(f).map(x=>itemFicha(x,u,nivel))}})};
+  return{ficha:false,tempo:PROG[nivel].tempo,dias:PROG[nivel].dias.map(d=>({n:d.n,f:d.f,obs:'',ex:d.ex.map(k=>itemProg(k,nivel))}))};
+}
+function diaAtual(){const pl=plano();return pl.dias[S.dia]||pl.dias[0]||{n:'Treino',f:'',obs:'',ex:[]}}
+const itemById=id=>diaAtual().ex.find(x=>x.id===id);
+function ensureSer(id){
+  const it=itemById(id),f=S.feitos[id]||(S.feitos[id]={});
   if(Array.isArray(f.series)&&f.series.length)return f;
-  const a=S.alunos[0],pr=parsePres(EX[k].pres[nivel]),ult=trsDe(a.id).map(t=>(t.exercicios||[]).find(x=>x.chave===k&&x.feito)).filter(Boolean)[0];
+  const a=S.alunos[0],ult=trsDe(a.id).map(t=>(t.exercicios||[]).find(x=>x.chave===it.k&&x.feito)).filter(Boolean)[0];
   const uc=ult&&Array.isArray(ult.series)&&ult.series.some(x=>cargaN(x.carga)!=null)?ult.series:null;
+  const fc=cargaN(it.carga),fcs=fc!=null?String(fc).replace('.',','):'';
   const ant=i=>{
-    if(uc){const l=uc.filter(x=>cargaN(x.carga)!=null);const x=uc[i]&&cargaN(uc[i].carga)!=null?uc[i]:l[l.length-1];return x?String(cargaN(x.carga)).replace('.',','):''}
-    const n=ult?cargaN(ult.carga):null;return n!=null?String(n).replace('.',','):'';
+    if(uc){const l=uc.filter(x=>cargaN(x.carga)!=null);const x=uc[i]&&cargaN(uc[i].carga)!=null?uc[i]:l[l.length-1];return x?String(cargaN(x.carga)).replace('.',','):fcs}
+    const n=ult?cargaN(ult.carga):null;return n!=null?String(n).replace('.',','):fcs;
   };
-  f.series=Array.from({length:pr.n},(_,i)=>({reps:pr.alvo,carga:ant(i),feito:!!f.feito}));
+  f.series=Array.from({length:it.n},(_,i)=>({reps:it.alvo,carga:ant(i),feito:!!f.feito}));
   if(f.feito&&f.carga){const n=cargaN(f.carga);if(n!=null)f.series.forEach(x=>x.carga=String(n).replace('.',','))}
   return f;
 }
-const nivelAluno=()=>S.alunos[0]&&LV[S.alunos[0].nivel]?S.alunos[0].nivel:'base';
 function rr(){const y=window.scrollY;render();window.scrollTo(0,y)}
 function abrirEx(k){S.aberto=S.aberto===k?null:k;rr()}
 function setSer(k,i,c,v){const f=S.feitos[k];if(f&&f.series&&f.series[i])f.series[i][c]=v}
 function toggleEx(k){
-  const f=ensureSer(k,nivelAluno());
+  const f=ensureSer(k);
   f.feito=!f.feito;f.series.forEach(x=>x.feito=f.feito);rr();
 }
 function serieOk(k,i){
-  const nivel=nivelAluno(),f=ensureSer(k,nivel),x=f.series[i];
+  const it=itemById(k),f=ensureSer(k),x=f.series[i];
   x.feito=!x.feito;f.feito=f.series.every(y=>y.feito);
-  if(x.feito){audioUnlock();startRest(REST_S[nivel]||60)}
+  if(x.feito){audioUnlock();startRest((it&&it.descanso)||REST_S[nivelAluno()]||60)}
   rr();
 }
 const agora=()=>Date.now()+(window.__dtOff||0);
@@ -1268,9 +1416,9 @@ function feedbackSheet(){
 }
 function setFeel(k){S.feel=k;[...document.querySelectorAll('#feel button')].forEach((b,i)=>b.classList.toggle('on',['facil','ok','pesado'][i]===k))}
 async function salvarTreino(){
-  const a=S.alunos[0],nivel=LV[a.nivel]?a.nivel:'base',dia=PROG[nivel].dias[S.dia];
+  const a=S.alunos[0],dia=diaAtual();
   const nome={facil:'Fácil',ok:'Ok',pesado:'Pesado'}[S.feel],tx=val('fb-tx').trim();
-  const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(k=>{const f=ensureSer(k,nivel),mx=maxCarga(f.series.filter(x=>x.feito));return{chave:k,feito:!!f.feito,carga:mx!=null?fmtKg(mx):'',series:f.series.map(x=>({reps:(n=>isFinite(n)?n:null)(pnum(x.reps)),carga:cargaN(x.carga),feito:!!x.feito}))}}),feedback:nome+(tx?': '+tx:'')};
+  const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(it=>{const f=ensureSer(it.id),mx=maxCarga(f.series.filter(x=>x.feito));return{chave:it.k,feito:!!f.feito,carga:mx!=null?fmtKg(mx):'',series:f.series.map(x=>({reps:(n=>isFinite(n)?n:null)(pnum(x.reps)),carga:cargaN(x.carga),feito:!!x.feito}))}}),feedback:nome+(tx?': '+tx:'')};
   busy('bt-fb',true,'Salvando…');
   try{const r=await Q(sb.from('apice_treinos_feitos').insert(row).select().single());
     S.ultRow=r;(S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.aberto=null;S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!');avisar('apice_treinos_feitos',r.id)}
@@ -1373,6 +1521,199 @@ function apagarReg(alunoId,regId){
     const {error}=await sb.from('apice_registros').delete().eq('id',regId);if(error)throw error;
     S.regs[alunoId]=S.regs[alunoId].filter(x=>x.id!==regId);closeSheet();render();toast('Avaliação apagada');
   });
+}
+
+/* ================= MONTADOR DE TREINO ================= */
+const DESCANSOS=[30,45,60,90,120,180];
+const nomeAluno=id=>{const a=aluno(id);return a?a.nome:'aluno'};
+function montarTreino(alunoId){
+  const n=fichasDe(alunoId).length;
+  S.ed={id:null,aluno_id:alunoId,nome:'Treino '+letra(n),foco:'',obs:'',ex:[]};edRender();
+}
+function novoModelo(){S.ed={id:null,aluno_id:null,nome:'Modelo '+(modelos().length+1),foco:'',obs:'',ex:[]};edRender()}
+function editarFicha(id){
+  const f=S.fichas.find(x=>x.id===id);if(!f)return;
+  S.ed={id:f.id,aluno_id:f.aluno_id||null,nome:f.nome||'',foco:f.foco||'',obs:f.obs||'',
+    ex:exs(f).map(x=>({chave:x.chave,series:Math.min(10,Math.max(1,Math.round(Number(x.series))||3)),reps:String(x.reps==null?'':x.reps),carga:x.carga||'',descanso:Number(x.descanso)>0?Number(x.descanso):null,obs:x.obs||''}))};
+  edRender();
+}
+function edRender(){
+  const sh=document.querySelector('.sheet'),y=sh&&$('sheet').classList.contains('on')?sh.scrollTop:0;
+  openSheet(edHTML());
+  if(y)document.querySelector('.sheet').scrollTop=y;
+}
+function edHTML(){
+  const ed=S.ed,al=ed.aluno_id?aluno(ed.aluno_id):null,nivel=al&&LV[al.nivel]?al.nivel:null;
+  const padrao=nivel?`Padrão do nível (${REST_S[nivel]} s)`:'Padrão do nível';
+  const itens=ed.ex.map((x,i)=>{const inf=exInfo(x.chave),n=ed.ex.length;
+    return`<div class="edx"><div class="edx-h"><div class="thumb">${exThumb(x.chave)}</div>
+     <div class="t" onclick="edTroca(${i})"><b>${esc(inf.nome)}</b><small>${esc(inf.grupo||'Sem grupo')} · toque para trocar</small></div>
+     <div class="edx-b"><button class="mini" ${i?'':'disabled'} onclick="edMove(${i},-1)" aria-label="Subir">↑</button><button class="mini" ${i<n-1?'':'disabled'} onclick="edMove(${i},1)" aria-label="Descer">↓</button><button class="mini red" onclick="edDel(${i})" aria-label="Remover">✕</button></div></div>
+     <div class="edx-g">
+      <div class="fld"><label>Séries</label><div class="stp"><button onclick="edSer(${i},-1)" aria-label="Menos uma série">−</button><b>${x.series}</b><button onclick="edSer(${i},1)" aria-label="Mais uma série">+</button></div></div>
+      <div class="fld"><label>Repetições</label><input value="${esc(x.reps)}" maxlength="20" placeholder="12 ou 8–10 ou 30 s" oninput="S.ed.ex[${i}].reps=this.value"></div>
+      <div class="fld"><label>Carga (opcional)</label><input value="${esc(x.carga)}" maxlength="20" placeholder="Ex.: 20 kg" oninput="S.ed.ex[${i}].carga=this.value"></div>
+      <div class="fld"><label>Descanso</label><select onchange="S.ed.ex[${i}].descanso=this.value?Number(this.value):null"><option value="">${esc(padrao)}</option>${(x.descanso&&!DESCANSOS.includes(x.descanso)?DESCANSOS.concat([x.descanso]).sort((p,q)=>p-q):DESCANSOS).map(d=>`<option value="${d}" ${x.descanso===d?'selected':''}>${d} s</option>`).join('')}</select></div>
+     </div>
+     <div class="fld edx-o"><label>Observação (opcional)</label><input value="${esc(x.obs)}" maxlength="150" placeholder="Ex.: descida lenta, 3 segundos" oninput="S.ed.ex[${i}].obs=this.value"></div></div>`}).join('');
+  return`<h4>${ed.id?'Editar':'Montar'} ${ed.aluno_id?'treino':'modelo'}${al?' · '+primeiro(al.nome):''}</h4>
+  <div class="fld"><label>Nome *</label><input id="ed-nome" maxlength="40" value="${esc(ed.nome)}" placeholder="Treino A" autocomplete="off" oninput="S.ed.nome=this.value"></div>
+  <div class="fld"><label>Foco</label><input id="ed-foco" maxlength="60" value="${esc(ed.foco)}" placeholder="Ex.: Peito, ombro e tríceps" autocomplete="off" oninput="S.ed.foco=this.value"></div>
+  <div class="fld"><label>Observação geral (o aluno vê)</label><textarea id="ed-obs" maxlength="500" style="min-height:64px" placeholder="Ex.: aqueça 10 minutos antes" oninput="S.ed.obs=this.value">${esc(ed.obs)}</textarea></div>
+  <div class="lbl" style="margin:6px 0 10px">Exercícios (${ed.ex.length})</div>
+  ${itens||'<p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Nenhum exercício ainda. Toque em Adicionar exercício.</p>'}
+  <button class="btn ghost" style="margin-bottom:14px" onclick="edAdd()">${I.plus} Adicionar exercício</button>
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-ed" onclick="salvarFicha(false)">Salvar</button>
+  ${ed.aluno_id?`<button class="btn ghost" id="bt-ed2" style="margin-top:8px" onclick="salvarFicha(true)">Salvar também como modelo</button>`:''}
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Cancelar</button>`;
+}
+function edMove(i,d){const l=S.ed.ex,j=i+d;if(j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];edRender()}
+function edDel(i){S.ed.ex.splice(i,1);edRender()}
+function edSer(i,d){const x=S.ed.ex[i];x.series=Math.min(10,Math.max(1,x.series+d));edRender()}
+/* seletor de exercício */
+function edAdd(){
+  if(S.ed.ex.length>=30){toast('Máximo de 30 exercícios por treino.');return}
+  S.sel={mode:'add',i:-1,q:'',g:''};selRender();
+}
+function edTroca(i){S.sel={mode:'troca',i,q:'',g:''};selRender()}
+function selChaves(){
+  const q=norm(S.sel.q).trim(),g=S.sel.g;
+  return Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)).filter(k=>{const i=exInfo(k);
+    return(!g||i.grupo===g)&&(!q||norm(i.nome).includes(q)||norm(i.grupo).includes(q)||norm(i.equip).includes(q))})
+    .sort((a,b)=>exInfo(a).nome.localeCompare(exInfo(b).nome,'pt-BR'));
+}
+function selGrupos(){const s=new Set();Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)).forEach(k=>{const g=exInfo(k).grupo;if(g)s.add(g)});return[...s].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function selListaHTML(){
+  const l=selChaves();
+  if(!l.length)return'<p style="font-size:13px;color:var(--mute);padding:14px 0">Nenhum exercício encontrado. Você pode criar o seu abaixo.</p>';
+  return l.map(k=>{const i=exInfo(k);return`<div class="row ex-row" onclick="selPick('${esc(k)}')"><div class="thumb">${exThumb(k)}</div><div class="t"><b>${esc(i.nome)}</b><small>${esc(i.grupo)}${i.equip?' · '+esc(i.equip):''}${i.proprio?' · seu exercício':''}</small></div><span style="color:var(--red);display:grid">${I.plus}</span></div>`}).join('');
+}
+function selLista(){const e=$('sel-lista');if(e)e.innerHTML=selListaHTML()}
+function selRender(){
+  const sh=document.querySelector('.sheet');
+  openSheet(`<h4>${S.sel.mode==='troca'?'Trocar exercício':'Adicionar exercício'}</h4>
+  <label class="search">${I.search}<input id="sel-q" placeholder="Buscar exercício" value="${esc(S.sel.q)}" autocomplete="off" oninput="S.sel.q=this.value;selLista()"></label>
+  <div class="chips"><button class="${S.sel.g?'':'on'}" onclick="S.sel.g='';selRender()">Todos</button>${selGrupos().map(g=>`<button class="${S.sel.g===g?'on':''}" onclick="S.sel.g=this.dataset.g;selRender()" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+  <div class="card" style="padding:0 14px;margin-bottom:12px" id="sel-lista">${selListaHTML()}</div>
+  <button class="btn ghost" onclick="crSheet('sel')">${I.plus} Criar exercício</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="edRender()">Voltar</button>`);
+  if(sh)document.querySelector('.sheet').scrollTop=0;
+}
+function selPick(chave){
+  const s=S.sel;if(!s||!S.ed)return;
+  if(s.mode==='troca'&&S.ed.ex[s.i])S.ed.ex[s.i].chave=chave;
+  else{if(S.ed.ex.length>=30){toast('Máximo de 30 exercícios por treino.');return}S.ed.ex.push({chave,series:3,reps:'12',carga:'',descanso:null,obs:''})}
+  edRender();
+  if(s.mode!=='troca'){const sh=document.querySelector('.sheet');if(sh)sh.scrollTop=sh.scrollHeight}
+  S.sel=null;
+}
+/* criar / editar exercício próprio */
+function crSheet(from,id){
+  const p=id?S.exps.find(x=>x.id===id):null;
+  S.cr={id:id||null,from,nome:p?p.nome:'',grupo:p?(p.grupo||'Outro'):'Pernas',musculos:p&&Array.isArray(p.musculos)?p.musculos.filter(m=>NOMEM[m]):[],equip:p?(p.equip||''):'',obs:p?(p.obs||''):'',video:p?(p.video_url||''):''};
+  const c=S.cr;
+  openSheet(`<h4>${id?'Editar exercício':'Criar exercício'}</h4>
+  <div class="fld"><label>Nome *</label><input id="cr-nome" maxlength="60" value="${esc(c.nome)}" placeholder="Ex.: Cadeira extensora" autocomplete="off" oninput="S.cr.nome=this.value"></div>
+  <div class="g3"><div class="fld"><label>Grupo</label><select id="cr-grupo" onchange="S.cr.grupo=this.value">${GRUPOS.map(g=>`<option ${c.grupo===g?'selected':''}>${esc(g)}</option>`).join('')}</select></div>
+   <div class="fld"><label>Equipamento</label><input id="cr-equip" maxlength="40" value="${esc(c.equip)}" placeholder="Ex.: Máquina" autocomplete="off" oninput="S.cr.equip=this.value"></div></div>
+  <div class="fld"><label>Músculos trabalhados (toque para marcar)</label>
+   <div style="display:flex;gap:12px;align-items:flex-start"><div id="cr-chips" style="flex:1;display:flex;flex-wrap:wrap;gap:6px">${crChips()}</div><div id="cr-map" style="width:22%;flex:none">${bodyMap('f',c.musculos,[])}</div></div></div>
+  <div class="fld"><label>Observação (opcional)</label><textarea id="cr-obs" maxlength="300" style="min-height:64px" placeholder="Como fazer, ajustes da máquina…" oninput="S.cr.obs=this.value">${esc(c.obs)}</textarea></div>
+  <div class="fld"><label>Link de vídeo (opcional)</label><input id="cr-video" maxlength="300" inputmode="url" autocapitalize="off" value="${esc(c.video)}" placeholder="https://" autocomplete="off" oninput="S.cr.video=this.value"></div>
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-cr" onclick="crSalvar()">${id?'Salvar exercício':'Criar exercício'}</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="crVoltar()">Cancelar</button>`);
+}
+const crChips=()=>Object.keys(NOMEM).map(m=>`<button type="button" class="badge" style="padding:8px 12px;font-size:12px;border:1px solid var(--line);background:${S.cr.musculos.includes(m)?'var(--red)':'var(--s2)'};color:${S.cr.musculos.includes(m)?'#fff':'var(--mute)'}" onclick="crMus('${m}')">${esc(NOMEM[m])}</button>`).join('');
+function crMus(m){const l=S.cr.musculos,i=l.indexOf(m);if(i<0)l.push(m);else l.splice(i,1);$('cr-chips').innerHTML=crChips();$('cr-map').innerHTML=bodyMap('f',l,[])}
+function crVoltar(){if(S.cr&&S.cr.from==='sel'&&S.ed)selRender();else closeSheet()}
+async function crSalvar(){
+  const c=S.cr,nome=c.nome.trim(),video=c.video.trim();
+  if(!nome){msg('Dê um nome ao exercício.');return}
+  if(video&&(!/^https:\/\/\S+$/i.test(video)||video.length>300)){msg('O link do vídeo precisa começar com https://');return}
+  const row={nome,grupo:c.grupo||'Outro',musculos:c.musculos.slice(),equip:c.equip.trim()||null,obs:c.obs.trim()||null,video_url:video||null};
+  msg('');busy('bt-cr',true,'Salvando…');
+  try{
+    let r;
+    if(c.id){r=await Q(sb.from('apice_exercicios').update(row).eq('id',c.id).select().single());const i=S.exps.findIndex(x=>x.id===c.id);if(i>=0)S.exps[i]=r}
+    else{row.personal_id=S.user.id;r=await Q(sb.from('apice_exercicios').insert(row).select().single());S.exps.push(r)}
+    if(c.from==='sel'&&S.ed&&!c.id){S.sel={mode:'add',i:-1,q:'',g:''};selPick('p:'+r.id);toast('Exercício criado e adicionado')}
+    else if(c.from==='sel'&&S.ed){selRender();toast('Exercício salvo')}
+    else{closeSheet();render();toast(c.id?'Exercício salvo':'Exercício criado')}
+  }catch(e){busy('bt-cr',false);msg(traduzErro(e))}
+}
+function excluirExProprio(id){
+  const p=S.exps.find(x=>x.id===id);if(!p)return;
+  confirmar('Excluir exercício?',`"${p.nome}" será apagado. Treinos que usam este exercício vão mostrar "Exercício removido".`,'Sim, excluir',async()=>{
+    const {error}=await sb.from('apice_exercicios').delete().eq('id',id);if(error)throw error;
+    S.exps=S.exps.filter(x=>x.id!==id);S.stack=[];closeSheet();render();toast('Exercício excluído')});
+}
+/* salvar ficha */
+async function salvarFicha(comoModelo){
+  const ed=S.ed,nome=(ed.nome||'').trim();
+  if(!nome){msg('Dê um nome ao treino.');return}
+  if(!ed.ex.length){msg('Adicione pelo menos um exercício.');return}
+  for(const x of ed.ex){if(!String(x.reps||'').trim()){msg('Informe as repetições de '+exInfo(x.chave).nome+'.');return}}
+  const exercicios=ed.ex.map(x=>({chave:x.chave,series:x.series,reps:String(x.reps).trim(),carga:String(x.carga||'').trim()||null,descanso:x.descanso||null,obs:String(x.obs||'').trim()||null}));
+  const base={nome:nome.slice(0,40),foco:(ed.foco||'').trim().slice(0,60)||null,exercicios,obs:(ed.obs||'').trim().slice(0,500)||null};
+  msg('');busy(comoModelo?'bt-ed2':'bt-ed',true,'Salvando…');
+  try{
+    let r;
+    if(ed.id){r=await Q(sb.from('apice_fichas').update(base).eq('id',ed.id).select().single());const i=S.fichas.findIndex(x=>x.id===ed.id);if(i>=0)S.fichas[i]=r}
+    else{r=await Q(sb.from('apice_fichas').insert(Object.assign({personal_id:S.user.id,aluno_id:ed.aluno_id,ordem:ed.aluno_id?ordemNova(ed.aluno_id):0},base)).select().single());S.fichas.push(r)}
+    if(ed.aluno_id)avisar('apice_fichas',r.id,{novo:!ed.id});
+    let extra='';
+    if(comoModelo&&ed.aluno_id){const m=await Q(sb.from('apice_fichas').insert(Object.assign({personal_id:S.user.id,aluno_id:null,ordem:0},base)).select().single());S.fichas.push(m);extra=' e como modelo'}
+    S.ed=null;closeSheet();render();toast('Treino salvo'+extra);
+  }catch(e){busy(comoModelo?'bt-ed2':'bt-ed',false);msg(traduzErro(e))}
+}
+const ordemNova=alunoId=>{const l=fichasDe(alunoId);return l.length?Math.max(...l.map(f=>f.ordem||0))+1:0};
+async function moverFicha(id,d){
+  const f=S.fichas.find(x=>x.id===id);if(!f)return;
+  const l=fichasDe(f.aluno_id),i=l.findIndex(x=>x.id===id),j=i+d;if(j<0||j>=l.length)return;
+  [l[i],l[j]]=[l[j],l[i]];
+  try{for(let n=0;n<l.length;n++){if(l[n].ordem!==n){await Q(sb.from('apice_fichas').update({ordem:n}).eq('id',l[n].id));l[n].ordem=n}}}
+  catch(e){toast(traduzErro(e))}
+  rr();
+}
+function excluirFicha(id){
+  const f=S.fichas.find(x=>x.id===id);if(!f)return;
+  confirmar('Excluir treino?',f.aluno_id?`"${f.nome}" será removido do treino de ${nomeAluno(f.aluno_id)}.`:`O modelo "${f.nome}" será apagado. Treinos já copiados para alunos não mudam.`,'Sim, excluir',async()=>{
+    const {error}=await sb.from('apice_fichas').delete().eq('id',id);if(error)throw error;
+    S.fichas=S.fichas.filter(x=>x.id!==id);closeSheet();rr();toast('Treino excluído')});
+}
+/* cópias */
+async function copiarFicha(src,alunoId,avisa){
+  const row={personal_id:S.user.id,aluno_id:alunoId,nome:src.nome,foco:src.foco||null,ordem:alunoId?ordemNova(alunoId):0,exercicios:JSON.parse(JSON.stringify(exs(src))),obs:src.obs||null};
+  const r=await Q(sb.from('apice_fichas').insert(row).select().single());S.fichas.push(r);
+  if(alunoId&&avisa!==false)avisar('apice_fichas',r.id,{novo:true});
+  return r;
+}
+function copiarDeSheet(alunoId){
+  const mods=modelos(),outros=S.alunos.filter(a=>a.id!==alunoId&&fichasDe(a.id).length);
+  const linha=(f,aid)=>`<div class="row" onclick="copiarDe('${esc(f.id)}','${esc(alunoId)}')"><div class="t"><b>${esc(f.nome)}</b><small>${esc(f.foco||'Sem foco')} · ${exs(f).length} exercícios</small></div><span style="color:var(--red);display:grid">${I.plus}</span></div>`;
+  const sec=(tit,lista,extra)=>`<div class="lbl" style="margin:14px 0 6px"><span>${esc(tit)}</span>${extra||''}</div><div class="card" style="padding:0 14px;margin-bottom:0">${lista}</div>`;
+  const corpo=(mods.length?sec('Modelos',mods.map(linha).join('')):'')+outros.map(a=>sec(a.nome,fichasDe(a.id).map(linha).join(''),`<a onclick="copiarTodas('${esc(a.id)}','${esc(alunoId)}')">Copiar todas</a>`)).join('');
+  openSheet(`<h4>Copiar treino para ${primeiro(nomeAluno(alunoId))}</h4>${corpo||'<p style="font-size:14px;color:var(--mute);line-height:1.5;margin-bottom:12px">Você ainda não tem modelos nem treinos de outros alunos para copiar. Monte um treino e use Salvar também como modelo.</p>'}
+  <button class="btn ghost" style="margin-top:14px" onclick="closeSheet()">Fechar</button>`);
+}
+async function copiarDe(fid,alunoId){
+  const f=S.fichas.find(x=>x.id===fid);if(!f)return;
+  try{await copiarFicha(f,alunoId);closeSheet();render();toast('Treino copiado. Ajuste se precisar.')}catch(e){toast(traduzErro(e))}
+}
+async function copiarTodas(deId,alunoId){
+  try{const l=fichasDe(deId);let ult=null;for(const f of l)ult=await copiarFicha(f,alunoId,false);if(ult)avisar('apice_fichas',ult.id,{novo:true});closeSheet();render();toast(l.length+(l.length===1?' treino copiado':' treinos copiados'))}catch(e){toast(traduzErro(e))}
+}
+function aplicarSheet(fid){
+  const f=S.fichas.find(x=>x.id===fid);if(!f)return;
+  const l=S.alunos.filter(a=>a.ativo!==false);
+  openSheet(`<h4>Aplicar "${esc(f.nome)}" a…</h4>${l.length?`<div class="card" style="padding:0 14px;margin-bottom:12px">${l.map(a=>`<div class="row" onclick="aplicarModelo('${esc(fid)}','${esc(a.id)}')"><div class="av" style="width:36px;height:36px;font-size:12px">${esc(ini(a.nome))}</div><div class="t"><b>${esc(a.nome)}</b><small>${fichasDe(a.id).length?fichasDe(a.id).length+' treinos montados':'programa padrão'}</small></div><span style="color:var(--red);display:grid">${I.plus}</span></div>`).join('')}</div>`:'<p style="font-size:14px;color:var(--mute);margin-bottom:12px">Cadastre um aluno primeiro.</p>'}
+  <button class="btn ghost" onclick="closeSheet()">Fechar</button>`);
+}
+async function aplicarModelo(fid,alunoId){
+  const f=S.fichas.find(x=>x.id===fid);if(!f)return;
+  try{await copiarFicha(f,alunoId);closeSheet();render();toast('Modelo aplicado a '+nomeAluno(alunoId))}catch(e){toast(traduzErro(e))}
 }
 
 iniciar();

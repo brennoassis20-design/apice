@@ -121,6 +121,11 @@ input,select{font:inherit}
 .day-h small{font-size:12px;color:var(--mute)}
 .day-b{border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px;padding:0 16px}
 .prof{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.hd-acoes{display:flex;align-items:center;gap:8px;flex:none}
+.sino{position:relative;width:42px;height:42px;border-radius:50%;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;color:var(--bone)}
+.sino i{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--s1)}
+.nov{padding:12px 0;border-bottom:1px solid var(--line)}.nov:last-child{border-bottom:0}
+.nov h3{font-size:16px;margin:2px 0 4px}.nov p{font-size:14px;line-height:1.5;color:#CFCAC1}.nov .nov-d{font-size:12px;color:var(--dim)}
 .prof .av{width:64px;height:64px;font-size:20px}
 .prof h3{font-size:22px;font-weight:800;letter-spacing:-.01em}
 .prof p{font-size:13px;color:var(--mute);margin-top:2px}
@@ -453,6 +458,8 @@ function fakeGo(){
   else if(t==='feedback'){S.feitos={supino:{feito:true,carga:'82 kg'}};render();feedbackSheet()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
+  else if(t==='perfil'){perfilSheet()}
+  else if(t==='testepush'){(async()=>{await salvarPeso0()})()}
   else if(t==='instalar'){instalarSheet(a)}
   else if(t==='teste2'){(async()=>{render();S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();setFeel('pesado');$('fb-tx').value='cansei';await salvarTreino();const a=S.alunos[0];render();document.title='T2 treinos='+S.trs[a.id].length+' primeiro='+S.trs[a.id][0].data+' '+S.trs[a.id][0].treino+' fb='+S.trs[a.id][0].feedback+' seq='+sequencia(a.id)+' proxDia='+S.dia})()}
   else if(t==='teste'){(async()=>{const L=[];
@@ -522,7 +529,7 @@ function makeFake(kind){
     async updateUser(){return{data:{user:cur},error:null}}
    },
    from:t=>new QB(t),
-   functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
+   functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));if(n==='apice-notificar'){(window.__push=window.__push||[]).push(body);return{data:{ok:true,enviados:0},error:null}}const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
      if(a.user_id)return{data:{ok:true,situacao:'ja_tem_acesso'},error:null};a.convidado_em=new Date().toISOString();return{data:{ok:true,situacao:'convite_enviado'},error:null}}}
   };
 }
@@ -610,6 +617,7 @@ async function doNewPass(e){
   return false;
 }
 async function sair(){
+  try{if(pushOk()&&pushPerm()==='granted'){const g=await navigator.serviceWorker.ready,s=await g.pushManager.getSubscription();if(s)await sb.functions.invoke('apice-notificar',{body:{acao:'desassinar',endpoint:s.endpoint}})}}catch(e){}
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
@@ -643,6 +651,7 @@ async function onAuth(ev,ses){
 }
 function recarregar(){carregarTudo()}
 async function carregarTudo(){
+  carregarNovidades();
   if(S.carregando)return;S.carregando=true;
   S.screen='loading';render();
   try{
@@ -657,6 +666,7 @@ async function carregarTudo(){
     tr.forEach(r=>{(S.trs[r.aluno_id]=S.trs[r.aluno_id]||[]).push(r)});
     S.tab=TABS[p.papel==='personal'?'personal':'aluno'][0][0];S.stack=[];S.dia=null;S.feitos={};
     S.screen='app';render();
+    reassinarPush();
     if(FAKE)fakeGo();
   }catch(e){S.screen='erro';S.aviso=traduzErro(e);render()}
   finally{S.carregando=false}
@@ -679,6 +689,36 @@ function bannerInstalar(){
   try{if(localStorage.getItem('apice_inst_x'))return''}catch(_){}
   return`<div class="inst">📲<span><b>Instale o Ápice</b> na tela inicial e abra como app.</span><button class="go" onclick="instalarSheet()">Como instalar</button><button class="x" aria-label="Fechar" onclick="fecharBanner()">×</button></div>`;
 }
+/* ================= NOTIFICAÇÕES (WEB PUSH) ================= */
+const VAPID_PUB='BILex5PQUdp6MExTt2lRwVXCiTM8CxWNpdnGRHwC6R3MttfHaTKZZ1_QKLkmNZI1YF1qOM5eIgP3Y7x-s1YC5BY';
+const pushPerm=()=>('Notification' in window)?Notification.permission:'unsupported';
+const pushOk=()=>'Notification' in window&&'PushManager' in window&&'serviceWorker' in navigator;
+function bannerPush(){
+  if(!INSTALADO()||!pushOk()||pushPerm()!=='default')return'';
+  try{if(localStorage.getItem('apice_push_x'))return''}catch(_){}
+  return`<div class="inst">🔔<span><b>Receba avisos</b> de treinos e avaliações no celular.</span><button class="go" onclick="ativarPush()">Ativar</button><button class="x" aria-label="Fechar" onclick="fecharBannerPush()">×</button></div>`;
+}
+function fecharBannerPush(){try{localStorage.setItem('apice_push_x','1')}catch(_){}render()}
+function chaveBytes(b64){const p='='.repeat((4-b64.length%4)%4),r=atob((b64+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function assinarPush(){
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:chaveBytes(VAPID_PUB)});
+  const {error}=await sb.functions.invoke('apice-notificar',{body:{acao:'assinar',sub:sub.toJSON(),aparelho:navigator.userAgent.slice(0,120)}});
+  if(error)throw error;
+}
+async function ativarPush(){
+  if(SO==='ios'&&!INSTALADO()){toast('No iPhone, instale o Ápice na tela inicial primeiro');instalarSheet('ios');return}
+  if(!pushOk()){toast('Este aparelho não aceita notificações.');return}
+  if(pushPerm()==='denied'){toast('Notificações bloqueadas. Libere em Ajustes > Notificações > Ápice (ou nas configurações do navegador).');return}
+  try{
+    const p=await Notification.requestPermission();
+    if(p!=='granted'){toast(p==='denied'?'Notificações bloqueadas. Libere em Ajustes > Notificações > Ápice.':'Tudo bem, você pode ativar depois pelo Perfil.');render();return}
+    await assinarPush();closeSheet();render();toast('Notificações ativadas');
+  }catch(e){toast('Não foi possível ativar agora. Tente de novo.')}
+}
+function reassinarPush(){if(pushOk()&&pushPerm()==='granted')assinarPush().catch(()=>{})}
+function avisar(tabela,id,extra){try{Promise.resolve(sb.functions.invoke('apice-notificar',{body:Object.assign({acao:'avisar',tabela,id},extra||{})})).catch(()=>{})}catch(_){}}
 function fecharBanner(){try{localStorage.setItem('apice_inst_x','1')}catch(_){}render()}
 const IC_SHARE='<svg class="ico-in" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4C9EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
 const IC_MAIS='<svg class="ico-in" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
@@ -708,14 +748,26 @@ function render(){
   const app=$('view'),tb=$('tabbar');
   if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
   const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
-  app.innerHTML=(S.stack.length?'':bannerInstalar())+(V[v.type]||V.vazio)(v);window.scrollTo(0,0);
+  app.innerHTML=(S.stack.length?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);window.scrollTo(0,0);
   tb.style.display='';
   tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
 }
-const avBtn=()=>`<button class="av" onclick="perfilSheet()" aria-label="Perfil">${esc(ini(S.perfil&&S.perfil.nome))}</button>`;
+/* ---- sininho de novidades do app (só personal) ---- */
+let NOVIDADES=[];
+const NOV_VISTO=()=>{try{return localStorage.getItem('apice_nov_visto')||''}catch(_){return''}};
+const temNovidade=()=>NOVIDADES.length&&NOVIDADES[0].id!==NOV_VISTO();
+async function carregarNovidades(){try{const r=await fetch('novidades.json?v='+Date.now(),{cache:'no-store'});if(r.ok){const j=await r.json();if(Array.isArray(j)){NOVIDADES=j;if(S.screen==='app')render()}}}catch(_){}}
+function novidadesSheet(){
+  const lista=NOVIDADES.length?NOVIDADES.map(n=>`<div class="nov"><p class="nov-d">${esc(fmtD(n.data))}</p><h3>${esc(n.titulo)}</h3><p>${esc(n.texto)}</p></div>`).join(''):'<p class="note">Nenhuma novidade por enquanto.</p>';
+  openSheet(`<h4>Novidades do Ápice</h4>${lista}`);
+  if(NOVIDADES.length){try{localStorage.setItem('apice_nov_visto',NOVIDADES[0].id)}catch(_){}render()}
+}
+const sinoBtn=()=>`<button class="sino" onclick="novidadesSheet()" aria-label="Novidades do app"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>${temNovidade()?'<i></i>':''}</button>`;
+const avBtn=()=>`<span class="hd-acoes">${eP()?sinoBtn():''}<button class="av" onclick="perfilSheet()" aria-label="Perfil">${esc(ini(S.perfil&&S.perfil.nome))}</button></span>`;
 function perfilSheet(){
   openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
   <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">📲 Instalar no celular</button>
+  ${pushOk()||(SO==='ios'&&!INSTALADO())?'<button class="btn ghost" style="margin-bottom:8px" onclick="ativarPush()">'+(pushPerm()==='granted'?'🔔 Notificações ativadas ✓':'🔔 Ativar notificações')+'</button>':''}
   <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
 }
 const primeiro=n=>esc(String(n||'').trim().split(/\s+/)[0]);
@@ -946,7 +998,7 @@ async function salvarTreino(){
   const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(k=>({chave:k,feito:!!(S.feitos[k]&&S.feitos[k].feito),carga:(S.feitos[k]&&S.feitos[k].carga||'').trim()})),feedback:nome+(tx?': '+tx:'')};
   busy('bt-fb',true,'Salvando…');
   try{const r=await Q(sb.from('apice_treinos_feitos').insert(row).select().single());
-    (S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!')}
+    (S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!');avisar('apice_treinos_feitos',r.id)}
   catch(e){busy('bt-fb',false);toast(traduzErro(e))}
 }
 /* ================= FORMULÁRIOS ================= */
@@ -978,7 +1030,7 @@ async function salvarAluno(id){
   const row={nome,email:email||null,telefone:val('al-tel').trim()||null,nascimento:val('al-nasc')||null,altura:alt,sexo:val('al-sexo')||null,nivel:val('al-nivel'),objetivo:val('al-obj').trim()||null,meta_peso:meta,nota:val('al-nota').trim()||null};
   msg('');busy('bt-al',true,'Salvando…');
   try{
-    if(id){const r=await Q(sb.from('apice_alunos').update(row).eq('id',id).select().single());Object.assign(aluno(id),r);closeSheet();render();toast('Aluno atualizado')}
+    if(id){const r=await Q(sb.from('apice_alunos').update(row).eq('id',id).select().single());Object.assign(aluno(id),r);closeSheet();render();toast('Aluno atualizado');avisar('apice_alunos',id)}
     else{row.personal_id=S.user.id;row.ativo=true;const r=await Q(sb.from('apice_alunos').insert(row).select().single());
       S.alunos.push(r);S.alunos.sort((x,y)=>String(x.nome).localeCompare(String(y.nome),'pt-BR'));S.regs[r.id]=[];S.trs[r.id]=[];
       closeSheet();S.tab='alunos';S.stack=[{type:'aluno',id:r.id}];render();toast('Aluno cadastrado')}
@@ -1013,12 +1065,13 @@ async function salvarAval(alunoId,regId){
   if(peso==null&&gord==null&&!Object.keys(med).length){msg('Preencha ao menos o peso, a gordura ou uma medida.');return}
   const row={aluno_id:alunoId,data,peso,gordura:gord,medidas:Object.keys(med).length?med:null,obs:val('av-obs').trim()||null};
   msg('');busy('bt-av',true,'Salvando…');
-  try{
+  try{let rid=regId;
     if(regId){const r=await Q(sb.from('apice_registros').update(row).eq('id',regId).select().single());const l=S.regs[alunoId];l[l.findIndex(x=>x.id===regId)]=r}
-    else{row.criado_por=S.user.id;const r=await Q(sb.from('apice_registros').insert(row).select().single());(S.regs[alunoId]=S.regs[alunoId]||[]).push(r)}
-    sortRegs(alunoId);closeSheet();render();toast('Avaliação salva')
+    else{row.criado_por=S.user.id;const r=await Q(sb.from('apice_registros').insert(row).select().single());rid=r.id;(S.regs[alunoId]=S.regs[alunoId]||[]).push(r)}
+    sortRegs(alunoId);closeSheet();render();toast('Avaliação salva');avisar('apice_registros',rid,{editado:!!regId})
   }catch(e){busy('bt-av',false);msg(traduzErro(e))}
 }
+async function salvarPeso0(){const a=S.alunos[0];pesoSheet(a.id);$('pw').value='81,0';await salvarPeso(a.id);await new Promise(r=>setTimeout(r,400));document.title='PUSH '+JSON.stringify(window.__push||[])}
 function pesoSheet(alunoId){
   const pr=comPeso(alunoId),u=pr.length?Number(pr[pr.length-1].peso):'';
   openSheet(`<h4>Registrar meu peso</h4><div class="big-in"><input id="pw" inputmode="decimal" value="${u!==''?nf(u):''}" placeholder="0,0"><span>kg</span></div>
@@ -1031,7 +1084,7 @@ async function salvarPeso(alunoId){
   if(!data){msg('Informe a data.');return}
   msg('');busy('bt-pw',true,'Salvando…');
   try{const r=await Q(sb.from('apice_registros').insert({aluno_id:alunoId,data,peso:p,criado_por:S.user.id}).select().single());
-    (S.regs[alunoId]=S.regs[alunoId]||[]).push(r);sortRegs(alunoId);closeSheet();render();toast('Peso registrado')}
+    (S.regs[alunoId]=S.regs[alunoId]||[]).push(r);sortRegs(alunoId);closeSheet();render();toast('Peso registrado');avisar('apice_registros',r.id)}
   catch(e){busy('bt-pw',false);msg(traduzErro(e))}
 }
 function apagarReg(alunoId,regId){

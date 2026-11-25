@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0C0D0F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ápice">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Ápice · App do Personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -75,13 +82,26 @@ input,select{font:inherit}
 .bmaps{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .bmap{width:100%;display:block}
 .bmap path,.bmap ellipse,.bmap circle,.bmap rect{transition:fill .25s}
-.bmap .m{fill:#E3DED4}
-.bmap .n{fill:#B9B3A8}
-.bmap .p{fill:var(--red)}
-.bmap .s{fill:var(--red);fill-opacity:.45}
+.bmap .sk{fill:#CFC9BF;stroke:#CFC9BF;stroke-width:.8}
+.bmap .ln{fill:none;stroke:#A9A398;stroke-width:.7;stroke-linecap:round}
+.bmap .m{fill:#E6E1D8;stroke:#B3ACA0;stroke-width:.6}
+.bmap .p{fill:var(--red);stroke:#B8343A}
+.bmap .s{fill:#9B3B3F;stroke:#7E2D31}
 .bmap.click .m{cursor:pointer}
 .bmap.click .m:hover{fill:#fff}
-.bmap .sel{fill:var(--red)}
+.bmap .sel{fill:var(--red);stroke:#B8343A}
+.inst{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:13px}
+.inst b{color:var(--bone)}.inst span{flex:1;color:var(--mute)}
+.inst .go{background:var(--red);color:#fff;border-radius:10px;padding:7px 11px;font-weight:700;font-size:12.5px}
+.inst .x{color:var(--dim);font-size:18px;padding:0 4px}
+.passos{list-style:none;counter-reset:n;margin:6px 0 14px}
+.passos li{counter-increment:n;position:relative;padding:9px 0 9px 36px;font-size:14.5px;line-height:1.45;color:#CFCAC1;border-bottom:1px solid var(--line)}
+.passos li:last-child{border-bottom:0}
+.passos li:before{content:counter(n);position:absolute;left:0;top:8px;width:24px;height:24px;border-radius:50%;background:var(--redbg);color:var(--red2);font-weight:800;font-size:12.5px;display:grid;place-items:center}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--s2);border-radius:12px;padding:4px;margin:4px 0 8px}
+.seg button{padding:9px;border-radius:9px;font-weight:700;font-size:13.5px;color:var(--mute)}
+.seg button.on{background:var(--s3);color:var(--bone)}
+.ico-in{display:inline-block;vertical-align:-3px}
 .cap{text-align:center;font-size:11px;color:var(--dim);margin-top:4px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
 .legend{display:flex;gap:16px;font-size:12px;color:var(--mute);margin-top:10px;justify-content:center}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
@@ -187,6 +207,7 @@ a.btn{text-decoration:none}
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetIn"></div></div>
 <div class="toast" id="toast"></div>
 <script src="figura.js"></script>
+<script src="mapa.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const LV={
@@ -256,39 +277,7 @@ const PROG={
   dias:[{n:'Treino A',f:'Peito',ex:['supino']},{n:'Treino B',f:'Costas',ex:['terra','remada']},{n:'Treino C',f:'Pernas',ex:['agachamento','afundo','panturrilha']},{n:'Treino D',f:'Ombro e braços',ex:['desenvolvimento','rosca','triceps']},{n:'Treino E',f:'Core e poses',ex:['prancha']}]}
 };
 /* ================= MAPA DO CORPO ================= */
-const FRONT={
- trapezio:'M104,56 C110,62 122,66 134,70 L112,73 C108,68 105,62 104,56Z',
- ombro:'M136,70 C150,70 156,84 154,106 C147,101 140,97 133,93 C131,84 131,76 136,70Z',
- peito:'M102,75 L131,75 C134,87 133,100 127,111 C117,117 107,116 102,112Z',
- biceps:'M137,103 C149,108 152,130 148,150 C142,150 136,140 134,125 C134,115 134,108 137,103Z',
- antebraco:'M146,155 C157,170 157,198 151,228 L142,228 C139,202 137,178 139,158Z',
- abdomen:'M102,119h13v18h-13Z M102,140h13v18h-13Z M102,161h13v18h-13Z M102,182h13v20c-5,3-10,3-13,2Z',
- obliquo:'M119,120 C127,130 129,160 127,194 L119,200 C121,172 121,142 119,120Z',
- quadriceps:'M104,222 C118,214 133,220 135,236 C137,270 133,310 125,332 C117,334 110,332 106,326 C103,292 102,252 104,222Z',
- panturrilha:'M108,348 C117,343 128,346 128,358 C128,382 124,402 120,416 L112,416 C108,392 106,368 108,348Z'
-};
-const BACK={
- trapezio:'M100,50 L106,53 C110,62 122,66 136,72 C126,80 116,90 108,112 L100,124Z',
- ombro:FRONT.ombro,
- dorsal:'M112,104 C120,92 128,90 132,94 C136,114 132,146 120,176 L107,166 C108,142 109,120 112,104Z',
- triceps:FRONT.biceps,
- antebraco:FRONT.antebraco,
- lombar:'M101,130 L106,127 C106,150 108,167 116,181 L116,200 L101,200Z',
- gluteo:'M101,206 C120,198 137,208 137,232 C137,253 121,262 101,256Z',
- posterior:'M104,264 C118,259 133,263 133,278 C133,302 127,322 121,338 L108,338 C104,312 103,288 104,264Z',
- panturrilha:'M107,348 C122,342 133,357 131,378 C129,394 123,406 117,416 L110,416 C104,394 103,368 107,348Z'
-};
-const NOMEM={peito:'Peitoral',ombro:'Ombros',biceps:'Bíceps',triceps:'Tríceps',antebraco:'Antebraço',abdomen:'Abdômen',obliquo:'Oblíquos',quadriceps:'Quadríceps',panturrilha:'Panturrilha',trapezio:'Trapézio',dorsal:'Dorsais',lombar:'Lombar',gluteo:'Glúteos',posterior:'Posterior da coxa'};
-function bodyMap(side,prim=[],sec=[],click=false,sel=null){
-  const M=side==='f'?FRONT:BACK;
-  const base='';
-  const half=Object.entries(M).map(([k,d])=>{
-    const c=sel===k?'m sel':prim.includes(k)?'m p':sec.includes(k)?'m s':'m';
-    return`<path class="${c}" d="${d}" ${click?`onclick="pickMuscle('${k}')"`:''}><title>${NOMEM[k]}</title></path>`}).join('');
-  const static_=(side==='f'?'<path class="n" d="M100,205 L117,203 C112,214 106,219 100,221Z"/>':'')+`<ellipse class="n" cx="147" cy="241" rx="6" ry="10"/><ellipse class="n" cx="117" cy="341" rx="9" ry="6"/><ellipse class="n" cx="116" cy="424" rx="9" ry="5"/>`;
-  return`<svg class="bmap${click?' click':''}" viewBox="40 0 120 440"><circle class="n" cx="100" cy="29" r="18"/><rect class="n" x="93" y="44" width="14" height="14" rx="4"/>${base}
-   <g>${half}${static_}</g><g transform="translate(200 0) scale(-1 1)">${half}${static_}</g></svg>`;
-}
+const bodyMap=APICE_MAPA.bodyMap, NOMEM=APICE_MAPA.NOMES;
 
 /* ================= ÍCONES ================= */
 const I={
@@ -464,6 +453,7 @@ function fakeGo(){
   else if(t==='feedback'){S.feitos={supino:{feito:true,carga:'82 kg'}};render();feedbackSheet()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
+  else if(t==='instalar'){instalarSheet(a)}
   else if(t==='teste2'){(async()=>{render();S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();setFeel('pesado');$('fb-tx').value='cansei';await salvarTreino();const a=S.alunos[0];render();document.title='T2 treinos='+S.trs[a.id].length+' primeiro='+S.trs[a.id][0].data+' '+S.trs[a.id][0].treino+' fb='+S.trs[a.id][0].feedback+' seq='+sequencia(a.id)+' proxDia='+S.dia})()}
   else if(t==='teste'){(async()=>{const L=[];
     S.dia=0;S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();$('fb-tx').value='ok <b>x</b>';await salvarTreino();
@@ -552,7 +542,7 @@ function authHTML(){
     <div class="msg" id="msg"></div>
     <button class="btn" id="bt" type="submit">Entrar</button>
    </form>
-   <div class="center" style="margin-top:14px;display:flex;flex-direction:column;gap:2px"><button class="lnk" onclick="irAuth('forgot')">Esqueci a senha</button><button class="lnk" onclick="irAuth('signup')">Criar conta de personal</button></div></div>`;
+   <div class="center" style="margin-top:14px;display:flex;flex-direction:column;gap:2px"><button class="lnk" onclick="irAuth('forgot')">Esqueci a senha</button><button class="lnk" onclick="irAuth('signup')">Criar conta de personal</button>${INSTALADO()?'':'<button class="lnk" onclick="instalarSheet()">📲 Como instalar no celular</button>'}</div></div>`;
   if(sc==='signup')return`<div class="auth">${LOGO}<h2 style="font-size:20px;margin-bottom:14px">Criar conta de personal</h2>
    <form onsubmit="return doSignup(event)" novalidate>
     <div class="fld"><label>Seu nome</label><input id="f-nome" autocomplete="name" placeholder="Nome e sobrenome"></div>
@@ -676,17 +666,56 @@ function papel(){return eP()?'personal':'aluno'}
 function setTab(t){S.tab=t;S.stack=[];render()}
 function go(v){S.stack.push(v);render()}
 function back(){S.stack.pop();render()}
+
+/* ================= INSTALAR NO CELULAR ================= */
+const INSTALADO=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const SO=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)?'ios':/android/i.test(navigator.userAgent)?'android':'outro';
+let promptInstalar=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInstalar=e;if(S.screen==='app')render()});
+addEventListener('appinstalled',()=>{promptInstalar=null;toast('Ápice instalado na tela inicial!');render()});
+if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+function bannerInstalar(){
+  if(INSTALADO())return'';
+  try{if(localStorage.getItem('apice_inst_x'))return''}catch(_){}
+  return`<div class="inst">📲<span><b>Instale o Ápice</b> na tela inicial e abra como app.</span><button class="go" onclick="instalarSheet()">Como instalar</button><button class="x" aria-label="Fechar" onclick="fecharBanner()">×</button></div>`;
+}
+function fecharBanner(){try{localStorage.setItem('apice_inst_x','1')}catch(_){}render()}
+const IC_SHARE='<svg class="ico-in" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4C9EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const IC_MAIS='<svg class="ico-in" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+const IC_MENU='<svg class="ico-in" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+function passosInstalar(so){
+  if(so==='ios')return`<ol class="passos">
+   <li>Abra este endereço no <b>Safari</b> (o navegador da bússola azul).</li>
+   <li>Toque no botão <b>Compartilhar</b> ${IC_SHARE} na barra de baixo (ou em cima, no iPad).</li>
+   <li>Role a lista e toque em <b>Adicionar à Tela de Início</b> ${IC_MAIS}.</li>
+   <li>Toque em <b>Adicionar</b>, no canto de cima. O ícone do Ápice aparece junto dos seus apps.</li></ol>
+   <p class="note">Abra sempre pelo ícone. Seu login fica salvo.</p>`;
+  return`${promptInstalar?'<button class="btn" style="margin:6px 0 12px" onclick="instalarAgora()">Instalar agora</button><p class="note" style="margin-bottom:8px">Ou, se preferir, pelo menu:</p>':''}<ol class="passos">
+   <li>Abra este endereço no <b>Google Chrome</b>.</li>
+   <li>Toque nos <b>três pontinhos</b> ${IC_MENU} no canto de cima.</li>
+   <li>Toque em <b>Instalar app</b> (em alguns celulares aparece <b>Adicionar à tela inicial</b>).</li>
+   <li>Confirme em <b>Instalar</b>. O ícone do Ápice aparece junto dos seus apps.</li></ol>
+   <p class="note">Abra sempre pelo ícone. Seu login fica salvo.</p>`;
+}
+function instalarSheet(so){
+  so=so||(SO==='outro'?'ios':SO);
+  if(INSTALADO()){openSheet('<h4>Instalar no celular</h4><p class="note">O Ápice já está instalado neste aparelho. ✅</p>');return}
+  openSheet(`<h4>Instalar no celular</h4><div class="seg"><button class="${so==='ios'?'on':''}" onclick="instalarSheet('ios')">iPhone</button><button class="${so==='android'?'on':''}" onclick="instalarSheet('android')">Android</button></div>${passosInstalar(so)}`);
+}
+async function instalarAgora(){if(!promptInstalar)return;promptInstalar.prompt();try{await promptInstalar.userChoice}catch(_){}promptInstalar=null;closeSheet();render()}
+
 function render(){
   const app=$('view'),tb=$('tabbar');
   if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
   const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
-  app.innerHTML=(V[v.type]||V.vazio)(v);window.scrollTo(0,0);
+  app.innerHTML=(S.stack.length?'':bannerInstalar())+(V[v.type]||V.vazio)(v);window.scrollTo(0,0);
   tb.style.display='';
   tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
 }
 const avBtn=()=>`<button class="av" onclick="perfilSheet()" aria-label="Perfil">${esc(ini(S.perfil&&S.perfil.nome))}</button>`;
 function perfilSheet(){
   openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
+  <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">📲 Instalar no celular</button>
   <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
 }
 const primeiro=n=>esc(String(n||'').trim().split(/\s+/)[0]);

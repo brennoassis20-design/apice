@@ -202,6 +202,23 @@ body{background:var(--bg)}
 .feel button{height:46px;border-radius:14px;border:1px solid var(--line);background:var(--s2);font-weight:700;font-size:14px;color:var(--mute)}
 .feel button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
 a.btn{text-decoration:none}
+.exw{border-bottom:1px solid var(--line)}
+.exw:last-child{border-bottom:0}
+.exw .row{border-bottom:0}
+.sers{padding:0 0 14px}
+.ser{display:grid;grid-template-columns:34px 1fr 1fr 44px;gap:8px;align-items:center;margin-top:8px}
+.ser>span{font-size:12px;font-weight:700;color:var(--mute)}
+.sin{width:100%;min-width:0;height:44px;border-radius:12px;background:var(--s2);border:1px solid var(--line);color:var(--bone);padding:0 10px;font:inherit;font-size:16px;text-align:center;outline:0}
+.sin:focus{border-color:var(--red)}
+.ser.ok .sin{opacity:.6}
+.sok{height:44px;width:44px;border-radius:12px;border:2px solid var(--line);display:grid;place-items:center;color:var(--mute);font-size:18px;font-weight:800}
+.sok.on{background:var(--base);border-color:var(--base);color:var(--bg)}
+.sh{display:grid;grid-template-columns:34px 1fr 1fr 44px;gap:8px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.rest{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:456px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 76px);height:52px;border-radius:18px;background:var(--s2);border:1px solid var(--red);display:none;align-items:center;gap:8px;padding:0 10px 0 16px;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.rest.on{display:flex}
+.rest b{font-size:15px;flex:1;white-space:nowrap}
+.rest button{height:34px;padding:0 11px;border-radius:10px;background:var(--s3);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--bone)}
+.rest button.pl{background:var(--red);border-color:var(--red)}
 .hist{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
 .hist:last-child{border-bottom:0}
 .hist small{color:var(--mute);display:block;margin-top:2px;line-height:1.4}
@@ -213,6 +230,7 @@ a.btn{text-decoration:none}
   <nav class="tabbar" id="tabbar" style="display:none"></nav>
 </div>
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetIn"></div></div>
+<div class="rest" id="rest"><b id="rest-t"></b><button onclick="restAdd(-15)">−15</button><button onclick="restAdd(15)">+15</button><button class="pl" onclick="restPular()">Pular</button></div>
 <div class="toast" id="toast"></div>
 <script src="figura.js"></script>
 <script src="mapa.js"></script>
@@ -360,7 +378,7 @@ const Q=async p=>{const r=await p;if(r.error)throw r.error;return r.data};
 
 /* ================= ESTADO ================= */
 const S={screen:'loading',user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],filtroNivel:'todos',busca:'',muscle:null,side:'f',periodo:'tudo',
-  dia:null,feitos:{},feel:'ok',recovery:false,pwdDone:false,boot:false,carregando:false,aviso:''};
+  dia:null,feitos:{},aberto:null,cex:null,feel:'ok',recovery:false,pwdDone:false,boot:false,carregando:false,aviso:''};
 const eP=()=>S.perfil&&S.perfil.papel==='personal';
 const TABS={personal:[['painel','Painel'],['alunos','Alunos'],['treinos','Treinos'],['exerc','Exercícios']],
             aluno:[['hoje','Hoje'],['evol','Evolução'],['exerc','Exercícios']]};
@@ -443,6 +461,40 @@ function chart(a){
   s+=`<text x="${f1(lp[0])}" y="${f1(lp[1]-11)}" fill="#EDE8DF" font-size="11" font-weight="800" text-anchor="middle">${nf(ps[ps.length-1].v)}</text></svg>`;
   return s;
 }
+/* ---- evolução de carga ---- */
+function cargaHist(id){
+  const m={};
+  trsDe(id).forEach(t=>{const d=String(t.data).slice(0,10);(Array.isArray(t.exercicios)?t.exercicios:[]).forEach(e=>{
+    const l=cargasFeitas(e);if(!l.length||!EX[e.chave])return;const v=Math.max(...l);
+    const o=m[e.chave]||(m[e.chave]={});if(o[d]==null||v>o[d])o[d]=v})});
+  const out={};Object.keys(m).forEach(k=>{out[k]=Object.keys(m[k]).sort().map(d=>({d,v:m[k][d]}))});
+  return out;
+}
+function cargaChart(ps){
+  const W=330,H=170,pl=14,pr=22,pt=18,pb=24;
+  const vs=ps.map(p=>p.v);let mn=Math.min(...vs),mx=Math.max(...vs);const pad=Math.max(1,(mx-mn)*.2);mn-=pad;mx+=pad;
+  const X=i=>pl+(ps.length===1?0.5:i/(ps.length-1))*(W-pl-pr),Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
+  const pts=ps.map((p,i)=>[X(i),Y(p.v)]);
+  const d=pts.map((p,i)=>(i?'L':'M')+f1(p[0])+','+f1(p[1])).join(' ');
+  const area=d+` L${f1(pts[pts.length-1][0])},${H-pb} L${f1(pts[0][0])},${H-pb}Z`;
+  let o=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" role="img" aria-label="Gráfico de evolução da carga"><defs><linearGradient id="gc" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#E5484D" stop-opacity=".28"/><stop offset="1" stop-color="#E5484D" stop-opacity="0"/></linearGradient></defs>`;
+  o+=`<path d="${area}" fill="url(#gc)"/><path d="${d}" fill="none" stroke="#E5484D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p,i)=>{const last=i===pts.length-1;o+=`<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="${last?5:3}" fill="${last?'#E5484D':'#141519'}" stroke="#E5484D" stroke-width="2"/>`;
+    if(ps.length<=8||i%Math.ceil(ps.length/8)===0||last)o+=`<text x="${f1(p[0])}" y="${H-6}" fill="#6B675F" font-size="9" text-anchor="middle">${fmtDC(ps[i].d)}</text>`;
+    if(ps.length<=6||last||i===0)o+=`<text x="${f1(p[0])}" y="${f1(p[1]-9)}" fill="#EDE8DF" font-size="10" font-weight="800" text-anchor="middle">${String(ps[i].v).replace('.',',')}</text>`});
+  return o+'</svg>';
+}
+function cargaCard(a){
+  const h=cargaHist(a.id),ks=Object.keys(h).sort((x,y)=>h[y].length-h[x].length);
+  let corpo;
+  if(!ks.length)corpo='<p style="font-size:13px;color:var(--mute);padding:10px 0 4px">Ainda não há cargas registradas.</p>';
+  else{
+    const k=ks.includes(S.cex)?S.cex:ks[0],ps=h[k],ini0=ps[0].v,fim=ps[ps.length-1].v,df=fim-ini0;
+    corpo=`<div class="chips" style="margin:10px 0">${ks.map(x=>`<button class="${x===k?'on':''}" onclick="S.cex='${x}';rr()">${esc(EX[x].nome)}</button>`).join('')}</div>
+    <p style="font-size:12px;color:var(--mute);margin-bottom:6px">Maior carga por dia · agora <b style="color:var(--bone)">${esc(fmtKg(fim))}</b>${ps.length>1?` (${df>0?'+':''}${esc(String(Math.round(df*100)/100).replace('.',','))} kg desde o início)`:''}</p>${cargaChart(ps)}`;
+  }
+  return`<div class="card" id="cargaCard"><b style="font-size:15px">Evolução de carga</b>${corpo}</div>`;
+}
 /* ================= MOCK (só com ?fake=) ================= */
 function fakeEmail(b){
   return new Promise((res,rej)=>setTimeout(()=>{
@@ -459,6 +511,13 @@ function fakeGo(){
   else if(t==='aval'){S.tab='alunos';S.stack=[{type:'aluno',id:a}];render();avalSheet(a)}
   else if(t==='feito'){S.feitos={supino:{feito:true,carga:'82,5 kg'},desenvolvimento:{feito:true,carga:'40 kg'}};render()}
   else if(t==='feedback'){S.feitos={supino:{feito:true,carga:'82 kg'}};render();feedbackSheet()}
+  else if(t==='series'){render();const dia=PROG[nivelAluno()].dias[S.dia],k=dia.ex[0];S.aberto=k;rr();serieOk(k,0);if(!QS.get('noscroll'))setTimeout(()=>{const e=document.querySelector('.exw');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-120)},300)}
+  else if(t==='cargas'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();if(!QS.get('noscroll'))setTimeout(()=>{const e=$('cargaCard');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-20)},300)}
+  else if(t==='timer'){(async()=>{render();const k=PROG[nivelAluno()].dias[S.dia].ex[0];serieOk(k,0);const L=[];L.push('barra='+$('rest').classList.contains('on')+' txt='+$('rest-t').textContent);
+    window.__dtOff=(REST_S[nivelAluno()]-30)*1000;tickRest();L.push('t30='+$('rest-t').textContent);restAdd(15);L.push('+15='+$('rest-t').textContent);
+    window.__dtOff=REST_S[nivelAluno()]*1000+16000;await new Promise(r=>setTimeout(r,400));L.push('fim barra='+$('rest').classList.contains('on')+' toast='+$('toast').textContent+' fimNull='+(REST.fim===null));
+    S.aberto=k;rr();L.push('resumo='+document.querySelector('.exw .t small').textContent);document.title='TIMER '+L.join(' | ')})()}
+  else if(t==='salvar'){(async()=>{render();const k=PROG[nivelAluno()].dias[S.dia].ex[0];S.aberto=k;rr();setSer(k,0,'carga','82,5');setSer(k,1,'carga','85');serieOk(k,0);serieOk(k,1);feedbackSheet();await salvarTreino();const e=S.ultRow.exercicios[0];document.title='SALVAR aluno='+S.ultRow.aluno_id+' chave='+e.chave+' feito='+e.feito+' carga='+e.carga+' series='+JSON.stringify(e.series)+' exerc_total='+S.ultRow.exercicios.length})()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
   else if(t==='perfil'){perfilSheet()}
@@ -467,7 +526,7 @@ function fakeGo(){
   else if(t==='teste2'){(async()=>{render();S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();setFeel('pesado');$('fb-tx').value='cansei';await salvarTreino();const a=S.alunos[0];render();document.title='T2 treinos='+S.trs[a.id].length+' primeiro='+S.trs[a.id][0].data+' '+S.trs[a.id][0].treino+' fb='+S.trs[a.id][0].feedback+' seq='+sequencia(a.id)+' proxDia='+S.dia})()}
   else if(t==='teste'){(async()=>{const L=[];
     S.dia=0;S.feitos={supino:{feito:true,carga:'82 kg'}};feedbackSheet();$('fb-tx').value='ok <b>x</b>';await salvarTreino();
-    L.push('treinos='+S.trs.a1.length+' ultimo='+S.trs.a1[0].treino+' fb='+S.trs.a1[0].feedback+' prox='+(S.dia));
+    L.push('treinos='+S.trs.a1.length+' ultimo='+S.trs.a1[0].treino+' fb='+S.trs.a1[0].feedback+' prox='+(S.dia));const ex0=S.ultRow&&S.ultRow.exercicios[0];L.push('series='+(ex0&&Array.isArray(ex0.series)?ex0.series.length:'FALTA')+' carga0='+(ex0&&ex0.carga)+' feito0='+(ex0&&ex0.feito)+' s0='+JSON.stringify(ex0&&ex0.series&&ex0.series[0]));
     avalSheet('a1');$('av-peso').value='82,0';$('av-cintura').value='83,5';$('av-obs').value='<i>teste</i>';await salvarAval('a1','');
     L.push('regs='+S.regs.a1.length+' ultimoPeso='+S.regs.a1[S.regs.a1.length-1].peso);
     avalSheet('a1');$('av-peso').value='abc';await salvarAval('a1','');L.push('erroNum='+$('msg').textContent);
@@ -491,7 +550,14 @@ function makeFake(kind){
    [[49,78.0,18.2],[42,78.6],[35,79.1,17.6],[28,79.5],[21,80.2,17.2],[14,80.6],[7,81.0,16.9],[1,81.4,16.7]].forEach(([d,p,g],i)=>db.apice_registros.push({id:'r'+i,aluno_id:'a1',data:ago(d),peso:p,gordura:g==null?null:g,medidas:{cintura:84-i*.2,braco:36.5+i*.25,coxa:57+i*.3,peito:101+i*.5},obs:i===7?'Boa evolução no braço.':null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
    [[60,72.4],[30,70.2],[3,68.6]].forEach(([d,p],i)=>db.apice_registros.push({id:'s'+i,aluno_id:'a2',data:ago(d),peso:p,gordura:null,medidas:{cintura:82-i*2},obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
    [[44,92.0],[40,86.3]].forEach(([d,p],i)=>db.apice_registros.push({id:'t'+i,aluno_id:'a3',data:ago(d),peso:p,gordura:11.8-i,medidas:null,obs:null,criado_por:'p1',criado:ago(d)+'T10:00:00Z'}));
-   [[3,'Treino A'],[2,'Treino B'],[1,'Treino C']].forEach(([d,n],i)=>db.apice_treinos_feitos.push({id:'f'+i,aluno_id:'a1',data:ago(d),treino:n,exercicios:[{chave:'supino',feito:true,carga:'80 kg'},{chave:'terra',feito:true,carga:'110 kg'},{chave:'agachamento',feito:i!==0,carga:'100 kg'}],feedback:i===2?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z'}));
+   /* histórico com séries: 5 treinos, cargas crescentes (o último ainda no formato antigo p/ testar compatibilidade) */
+   const sr=(c,r)=>c.map(x=>({reps:r,carga:x,feito:true}));
+   const mx=l=>fmtKg(Math.max(...l));
+   const T=[[24,'Treino A',[70,72.5,72.5,75],[40,40,42.5],[100,105,110]],[17,'Treino B',[72.5,75,75,77.5],[42.5,42.5,45],[105,110,115]],[10,'Treino C',[75,77.5,77.5,80],[45,45,47.5],[110,115,120]],[3,'Treino A',[77.5,80,80,82.5],[45,47.5,47.5],[115,120,122.5]],[1,'Treino B',[80,82.5,82.5,85],[47.5,50,50],[120,125,125]]];
+   T.forEach(([d,n,sp,ds,te],i)=>db.apice_treinos_feitos.push({id:'f'+i,aluno_id:'a1',data:ago(d),treino:n,exercicios:[
+     {chave:'supino',feito:true,carga:mx(sp),series:sr(sp,8)},{chave:'desenvolvimento',feito:true,carga:mx(ds),series:sr(ds,10)},{chave:'terra',feito:true,carga:mx(te),series:sr(te,6)}],
+     feedback:i===4?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z'}));
+   db.apice_treinos_feitos.push({id:'fx',aluno_id:'a1',data:ago(30),treino:'Treino C',exercicios:[{chave:'supino',feito:true,carga:'67,5 kg'},{chave:'agachamento',feito:true,carga:'100 kg'}],feedback:'Ok',criado:ago(30)+'T19:00:00Z'});
   }
   const vis=(t,r)=>{
     const ids=db.apice_alunos.filter(a=>cur&&(a.personal_id===cur.id||a.user_id===cur.id)).map(a=>a.id);
@@ -624,7 +690,7 @@ async function sair(){
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
-function resetEstado(){Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],dia:null,feitos:{},recovery:false,pwdDone:false});closeSheet()}
+function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,alunos:[],regs:{},trs:{},tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
 
 /* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
 function iniciar(){
@@ -855,6 +921,7 @@ function evolHTML(a){
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font-size:15px">Evolução do peso</b>
    <div class="seg2" style="margin:0;width:130px"><button class="${S.periodo==='4s'?'on':''}" onclick="S.periodo='4s';render()">4 sem</button><button class="${S.periodo==='tudo'?'on':''}" onclick="S.periodo='tudo';render()">Tudo</button></div></div>
    ${chart(a)}</div>
+  ${cargaCard(a)}
   <div class="card"><b style="font-size:15px">Medidas (cm)</b>
    ${med.length?`<table class="med" style="margin-top:6px"><tr><th></th><th>Início</th><th>Atual</th><th>Dif.</th></tr>${med.map(m=>{const df=m.f-m.i;const bom=(m.k==='cintura'||m.k==='quadril')?df<0:df>0;return`<tr><td>${m.n}</td><td>${nf(m.i)}</td><td><b>${nf(m.f)}</b></td><td class="${df===0?'':bom?'up':'dn'}">${df>0?'+':''}${nf(df)}</td></tr>`}).join('')}</table>`:'<p style="font-size:13px;color:var(--mute);padding-top:8px">Nenhuma medida registrada.</p>'}</div>
   <div class="lbl">Avaliações</div><div class="card" style="padding:4px 16px">${avaliacoesHTML(a)}</div>`;
@@ -971,7 +1038,7 @@ V.hoje=()=>{
   const lim7=addDias(hoje(),-7),sem=trs.filter(t=>String(t.data).slice(0,10)>=lim7).length;
   const ultCarga=k=>{for(const t of trs){const e=(t.exercicios||[]).find(x=>x.chave===k&&x.carga);if(e)return e.carga}return''};
   return head+`
-  <div class="chips">${prog.dias.map((d,i)=>`<button class="${S.dia===i?'on':''}" onclick="S.dia=${i};S.feitos={};render()">${d.n}</button>`).join('')}</div>
+  <div class="chips">${prog.dias.map((d,i)=>`<button class="${S.dia===i?'on':''}" onclick="S.dia=${i};S.feitos={};S.aberto=null;render()">${d.n}</button>`).join('')}</div>
   <div class="hero" style="background:linear-gradient(140deg,#E5484D26,transparent 60%),var(--s1);cursor:default"><div style="display:flex;gap:16px;align-items:center">
    <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${R}" fill="none" stroke="#24272D" stroke-width="7"/><circle cx="37" cy="37" r="${R}" fill="none" stroke="#E5484D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 37 37)"/></svg><b>${feitos}/${dia.ex.length}</b></div>
    <div><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${dia.n.toUpperCase()} · ${LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${dia.f}</h4><p style="max-width:none">${prog.tempo}</p></div></div></div>
@@ -979,15 +1046,76 @@ V.hoje=()=>{
   <div class="grid2"><div class="kpi"><small>Sequência</small><b>${sequencia(a.id)} ${sequencia(a.id)===1?'dia':'dias'}</b><span style="color:var(--mute)">dias seguidos treinando</span></div>
    <div class="kpi"><small>Últimos 7 dias</small><b>${sem}</b><span style="color:var(--mute)">${sem===1?'treino registrado':'treinos registrados'}</span></div></div>
   <div class="lbl">Exercícios <a onclick="go({type:'prog',n:'${nivel}'})">ver programa</a></div>
-  <div class="card" style="padding:4px 16px">${dia.ex.map(k=>{const e=EX[k],f=S.feitos[k]||{},uc=ultCarga(k);return`<div class="row" style="cursor:default"><button class="check ${f.feito?'on':''}" onclick="toggleEx('${k}')" aria-label="Marcar">${f.feito?I.ok:''}</button>
+  <div class="card" style="padding:4px 16px">${dia.ex.map(k=>{const e=EX[k],f=ensureSer(k,nivel),uc=ultCarga(k),op=S.aberto===k,pr=parsePres(e.pres[nivel]),nS=f.series.filter(x=>x.feito).length,mx=maxCarga(f.series.filter(x=>x.feito));
+   const resumo=nS?` · ${nS}/${f.series.length} séries${mx!=null?' · '+fmtKg(mx):''}`:(uc?' · última: '+esc(uc):'');
+   return`<div class="exw"><div class="row" style="cursor:default"><button class="check ${f.feito?'on':''}" onclick="toggleEx('${k}')" aria-label="Marcar">${f.feito?I.ok:''}</button>
    <div class="thumb" onclick="go({type:'ex',k:'${k}',n:'${nivel}'})">${stageSVG(k,e,true)}</div>
-   <div class="t" onclick="go({type:'ex',k:'${k}',n:'${nivel}'})"><b style="${f.feito?'color:var(--mute);text-decoration:line-through':''}">${e.nome}</b><small><b>${e.pres[nivel]}</b>${uc?' · última: '+esc(uc):''}</small></div>
-   <input class="cin" placeholder="carga" value="${esc(f.carga||'')}" oninput="setCarga('${k}',this.value)" aria-label="Carga"></div>`}).join('')}</div>
+   <div class="t" style="cursor:pointer" onclick="abrirEx('${k}')"><b style="${f.feito?'color:var(--mute);text-decoration:line-through':''}">${e.nome}</b><small><b>${e.pres[nivel]}</b>${resumo}</small></div>
+   <span style="color:var(--dim);transform:rotate(${op?90:0}deg);display:grid" onclick="abrirEx('${k}')">${I.chev}</span></div>
+   ${op?`<div class="sers"><div class="sh"><span></span><span>${pr.seg?'Segundos':'Reps'}</span><span>Carga (kg)</span><span></span></div>${f.series.map((x,n)=>`<div class="ser ${x.feito?'ok':''}"><span>${n+1}ª</span><input class="sin" inputmode="${pr.seg?'numeric':'decimal'}" value="${esc(x.reps)}" placeholder="${pr.seg?'s':'reps'}" oninput="setSer('${k}',${n},'reps',this.value)" aria-label="Repetições da série ${n+1}"><input class="sin" inputmode="decimal" value="${esc(x.carga)}" placeholder="kg" oninput="setSer('${k}',${n},'carga',this.value)" aria-label="Carga da série ${n+1}"><button class="sok ${x.feito?'on':''}" onclick="serieOk('${k}',${n})" aria-label="Série ${n+1} feita">✓</button></div>`).join('')}</div>`:''}</div>`}).join('')}</div>
   <button class="btn" onclick="feedbackSheet()" ${feitos?'':'disabled'}>Concluir treino</button>
   ${trs.length?`<div class="lbl">Últimos treinos</div><div class="card" style="padding:4px 16px">${trs.slice(0,5).map(histTreino).join('')}</div>`:''}`;
 };
-function toggleEx(k){const f=S.feitos[k]||(S.feitos[k]={});f.feito=!f.feito;render()}
-function setCarga(k,v){const f=S.feitos[k]||(S.feitos[k]={});f.carga=v;}
+/* ---- séries, descanso ---- */
+const REST_S={base:60,forte:90,palco:120};
+function parsePres(t){
+  t=String(t||'');const m=t.match(/^\s*(\d+)\s*[×x]\s*(\d+)(?:\s*[–-]\s*\d+)?\s*(s\b)?/i);
+  if(!m)return{n:3,alvo:'',seg:false};
+  const n=Math.min(10,Math.max(1,Number(m[1])||3));return{n,alvo:m[2],seg:!!m[3]};
+}
+function fmtKg(v){return String(Math.round(v*100)/100).replace('.',',')+' kg'}
+function cargaN(x){const n=pnum(String(x==null?'':x).replace(/kg/i,''));return n!=null&&isFinite(n)&&n>0?n:null}
+const maxCarga=l=>{let m=null;l.forEach(x=>{const n=cargaN(x.carga);if(n!=null&&(m==null||n>m))m=n});return m};
+function cargasFeitas(e){/* números das séries feitas; treino antigo (sem series) = carga única */
+  if(Array.isArray(e.series))return e.series.filter(x=>x.feito).map(x=>cargaN(x.carga)).filter(n=>n!=null);
+  const n=e.feito?cargaN(e.carga):null;return n!=null?[n]:[];
+}
+function ensureSer(k,nivel){
+  const f=S.feitos[k]||(S.feitos[k]={});
+  if(Array.isArray(f.series)&&f.series.length)return f;
+  const a=S.alunos[0],pr=parsePres(EX[k].pres[nivel]),ult=trsDe(a.id).map(t=>(t.exercicios||[]).find(x=>x.chave===k&&x.feito)).filter(Boolean)[0];
+  const uc=ult&&Array.isArray(ult.series)&&ult.series.some(x=>cargaN(x.carga)!=null)?ult.series:null;
+  const ant=i=>{
+    if(uc){const l=uc.filter(x=>cargaN(x.carga)!=null);const x=uc[i]&&cargaN(uc[i].carga)!=null?uc[i]:l[l.length-1];return x?String(cargaN(x.carga)).replace('.',','):''}
+    const n=ult?cargaN(ult.carga):null;return n!=null?String(n).replace('.',','):'';
+  };
+  f.series=Array.from({length:pr.n},(_,i)=>({reps:pr.alvo,carga:ant(i),feito:!!f.feito}));
+  if(f.feito&&f.carga){const n=cargaN(f.carga);if(n!=null)f.series.forEach(x=>x.carga=String(n).replace('.',','))}
+  return f;
+}
+const nivelAluno=()=>S.alunos[0]&&LV[S.alunos[0].nivel]?S.alunos[0].nivel:'base';
+function rr(){const y=window.scrollY;render();window.scrollTo(0,y)}
+function abrirEx(k){S.aberto=S.aberto===k?null:k;rr()}
+function setSer(k,i,c,v){const f=S.feitos[k];if(f&&f.series&&f.series[i])f.series[i][c]=v}
+function toggleEx(k){
+  const f=ensureSer(k,nivelAluno());
+  f.feito=!f.feito;f.series.forEach(x=>x.feito=f.feito);rr();
+}
+function serieOk(k,i){
+  const nivel=nivelAluno(),f=ensureSer(k,nivel),x=f.series[i];
+  x.feito=!x.feito;f.feito=f.series.every(y=>y.feito);
+  if(x.feito){audioUnlock();startRest(REST_S[nivel]||60)}
+  rr();
+}
+const agora=()=>Date.now()+(window.__dtOff||0);
+const REST={fim:null};
+let AC=null;
+function audioUnlock(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;if(!AC)AC=new C();if(AC.state==='suspended')AC.resume()}catch(_){}}
+function bipe(){
+  try{if(!AC)return;const t=AC.currentTime;[0,.22].forEach(d=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.35,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.18);o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+.2)})}catch(_){}
+}
+function startRest(sec){REST.fim=agora()+sec*1000;tickRest()}
+function restAdd(s){if(REST.fim==null)return;REST.fim+=s*1000;tickRest()}
+function restPular(){REST.fim=null;tickRest()}
+function tickRest(){
+  const el=$('rest');if(!el)return;
+  if(REST.fim==null||S.screen!=='app'){el.classList.remove('on');return}
+  const ms=REST.fim-agora();
+  if(ms<=0){REST.fim=null;el.classList.remove('on');bipe();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(_){}toast('Descanso acabou — próxima série');return}
+  const s=Math.ceil(ms/1000);$('rest-t').textContent='Descanso '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');el.classList.add('on');
+}
+setInterval(tickRest,250);
+document.addEventListener('visibilitychange',tickRest);
 function feedbackSheet(){
   S.feel='ok';
   openSheet(`<h4>Como foi o treino?</h4><div class="feel" id="feel">${[['facil','Fácil'],['ok','Ok'],['pesado','Pesado']].map(([k,n])=>`<button class="${k==='ok'?'on':''}" onclick="setFeel('${k}')">${n}</button>`).join('')}</div>
@@ -998,10 +1126,10 @@ function setFeel(k){S.feel=k;[...document.querySelectorAll('#feel button')].forE
 async function salvarTreino(){
   const a=S.alunos[0],nivel=LV[a.nivel]?a.nivel:'base',dia=PROG[nivel].dias[S.dia];
   const nome={facil:'Fácil',ok:'Ok',pesado:'Pesado'}[S.feel],tx=val('fb-tx').trim();
-  const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(k=>({chave:k,feito:!!(S.feitos[k]&&S.feitos[k].feito),carga:(S.feitos[k]&&S.feitos[k].carga||'').trim()})),feedback:nome+(tx?': '+tx:'')};
+  const row={aluno_id:a.id,data:hoje(),treino:dia.n,exercicios:dia.ex.map(k=>{const f=ensureSer(k,nivel),mx=maxCarga(f.series.filter(x=>x.feito));return{chave:k,feito:!!f.feito,carga:mx!=null?fmtKg(mx):'',series:f.series.map(x=>({reps:(n=>isFinite(n)?n:null)(pnum(x.reps)),carga:cargaN(x.carga),feito:!!x.feito}))}}),feedback:nome+(tx?': '+tx:'')};
   busy('bt-fb',true,'Salvando…');
   try{const r=await Q(sb.from('apice_treinos_feitos').insert(row).select().single());
-    (S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!');avisar('apice_treinos_feitos',r.id)}
+    S.ultRow=r;(S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.aberto=null;S.dia=null;closeSheet();render();toast('Treino registrado. Bom trabalho!');avisar('apice_treinos_feitos',r.id)}
   catch(e){busy('bt-fb',false);toast(traduzErro(e))}
 }
 /* ================= FORMULÁRIOS ================= */

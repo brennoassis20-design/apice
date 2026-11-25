@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-26-series",
+    "data": "2026-11-26",
+    "titulo": "Carga por série e descanso",
+    "texto": "Agora o aluno registra a carga de cada série no treino, e o descanso conta sozinho entre uma série e outra. No cadastro do aluno você vê o gráfico de evolução da carga de cada exercício."
+  },
+  {
     "id": "2026-11-26-iphone-zoom",
     "data": "2026-11-26",
     "titulo": "Tela ajustada no iPhone",

@@ -850,12 +850,13 @@ async function convidar(id){
   const a=aluno(id);busy('bt-conv',true,'Enviando…');
   try{
     const {data,error}=await sb.functions.invoke('apice-convidar',{body:{aluno_id:id,redirect_to:URL_APP}});
-    if(error)throw error;if(data&&data.erro)throw {message:data.erro};
+    if(error){let msg='';try{const j=await error.context.json();msg=j&&j.erro}catch(_){}throw msg?{message:msg,proprio:true}:error}
+    if(data&&data.erro)throw {message:data.erro,proprio:true};
     const row=await Q(sb.from('apice_alunos').select('*').eq('id',id).single());
     Object.assign(a,row);
     const sit=data&&data.situacao;
     toast(sit==='ja_tem_acesso'?'Este aluno já tem acesso ao app':sit==='ligado_a_conta_existente'?'Aluno ligado à conta que ele já tinha':'Convite enviado por e-mail');
-  }catch(e){toast(traduzErro(e))}
+  }catch(e){toast(e&&e.proprio?e.message:traduzErro(e))}
   render();
 }
 

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-26-resposta",
+    "data": "2026-11-26",
+    "titulo": "Responda o feedback + lembretes automáticos",
+    "texto": "Agora você responde o feedback de cada treino do aluno: ele recebe notificação e vê sua resposta no histórico. E o app passa a te avisar quando um aluno fica 3 dias sem treinar e quando a reavaliação completa 30 dias."
+  },
+  {
+    "id": "2026-11-26-lembretes",
+    "data": "2026-11-26",
+    "titulo": "Lembretes automáticos",
+    "texto": "Aluno parado: no 3º e no 7º dia sem treinar, o aluno recebe um lembrete e você também. Reavaliação: 30 dias depois da última avaliação você recebe o aviso (repete a cada 7 dias até medir de novo)."
+  },
+  {
     "id": "2026-11-26-fichas",
     "data": "2026-11-26",
     "titulo": "Monte o treino de cada aluno",

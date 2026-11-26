@@ -221,6 +221,12 @@ a.btn{text-decoration:none}
 .rest button.pl{background:var(--red);border-color:var(--red)}
 .hist{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
 .hist:last-child{border-bottom:0}
+.resp{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--s2);border-left:3px solid var(--red);font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.resp b{display:block;font-size:12px;color:var(--mute);margin-bottom:2px}
+.resp-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.resp-a .mini,.resp-a a{height:36px;padding:0 12px;border-radius:10px;background:var(--s2);border:1px solid var(--line);color:var(--bone);font-size:13px;font-weight:600;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.resp-f textarea{width:100%;min-height:76px;border-radius:12px;background:var(--s2);border:1px solid var(--line);color:var(--bone);padding:10px 12px;font:inherit;font-size:16px;outline:0;resize:vertical;margin-top:8px}
+.resp-f .cnt{font-size:12px;color:var(--mute);text-align:right}
 .hist small{color:var(--mute);display:block;margin-top:2px;line-height:1.4}
 .row .t small.obsx{display:block;color:var(--dim);margin-top:2px;white-space:normal;line-height:1.35}
 .fch{padding:10px 0;border-bottom:1px solid var(--line)}
@@ -604,6 +610,23 @@ function fakeGo(){
     S.aberto='agachamento';rr();const i2=[...document.querySelectorAll('.sers .sin')];L.push('agach: reps0='+i2[0].value+' carga0='+i2[1].value+' series='+document.querySelectorAll('.sers .ser').length);
     feedbackSheet();await salvarTreino();const u=S.ultRow;L.push('treino='+u.treino+' ex='+u.exercicios.map(e=>e.chave+(e.feito?'*':'')).join(','));
     }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTEALUNOFICHA '+L.join(' | ')})()}
+  else if(t==='testeresposta'){(async()=>{const L=[];try{
+    S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();
+    const novo=S.trs.a1[0];L.push('btnResponder='+!!document.querySelector('#h-'+novo.id+' .resp-a .mini')+' wa='+/wa\.me\/5511988887777/.test($('view').innerHTML));
+    S.respEd=novo.id;rr();const ta=$('rs-'+novo.id);ta.value='Ótimo trabalho <i>x</i>';ta.dispatchEvent(new Event('input'));L.push('contador='+$('rc-'+novo.id).textContent+' maxlength='+ta.maxLength+' fs='+getComputedStyle(ta).fontSize);
+    await salvarResposta(novo.id);await new Promise(r=>setTimeout(r,500));
+    const h=$('h-'+novo.id).innerHTML;L.push('balao='+/Sua resposta/.test(h)+' editar='+/Editar/.test(h)+' data='+(h.match(/Sua resposta · (\d\d\/\d\d)/)||[])[1]);
+    const pu=(window.__push||[]).filter(x=>x.tabela==='apice_treinos_feitos');L.push('avisar='+pu.length+' id_ok='+(pu[0]&&pu[0].id===novo.id));
+    const bd=await Q(sb.from('apice_treinos_feitos').select('*').eq('id',novo.id));L.push('banco='+bd[0].resposta+' lido='+bd[0].lido_aluno);
+    L.push('xss_ok='+(!$('view').innerHTML.includes('<i>x</i>')&&$('view').innerHTML.includes('&lt;i&gt;x')));
+    const w=document.documentElement;L.push('semOverflow='+(w.scrollWidth<=w.clientWidth));
+    }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTERESPOSTA '+L.join(' | ')})()}
+  else if(t==='testealunoresposta'){(async()=>{const L=[];try{
+    render();L.push('selo='+!!$('seloResp')+' txt='+(($('seloResp')||{}).textContent||''));
+    const h=$('h-f3');L.push('balao='+(!!h&&/Resposta do seu personal · \d\d\/\d\d/.test(h.innerHTML))+' xss_ok='+(!!h&&!h.innerHTML.includes('<b>no supino')&&h.innerHTML.includes('&lt;b&gt;no supino')));
+    await verRespostas();await new Promise(r=>setTimeout(r,500));
+    const bd=await Q(sb.from('apice_treinos_feitos').select('*').eq('id','f3'));L.push('seloAposVer='+!!$('seloResp')+' lido_banco='+bd[0].lido_aluno+' balaoAinda='+!!document.querySelector('#h-f3 .resp')+' semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
+    }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTEALUNORESPOSTA '+L.join(' | ')})()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
   else if(t==='perfil'){perfilSheet()}
@@ -657,7 +680,7 @@ function makeFake(kind){
    const T=[[24,'Treino A',[70,72.5,72.5,75],[40,40,42.5],[100,105,110]],[17,'Treino B',[72.5,75,75,77.5],[42.5,42.5,45],[105,110,115]],[10,'Treino C',[75,77.5,77.5,80],[45,45,47.5],[110,115,120]],[3,'Treino A',[77.5,80,80,82.5],[45,47.5,47.5],[115,120,122.5]],[1,'Treino B',[80,82.5,82.5,85],[47.5,50,50],[120,125,125]]];
    T.forEach(([d,n,sp,ds,te],i)=>db.apice_treinos_feitos.push({id:'f'+i,aluno_id:'a1',data:ago(d),treino:n,exercicios:[
      {chave:'supino',feito:true,carga:mx(sp),series:sr(sp,8)},{chave:'desenvolvimento',feito:true,carga:mx(ds),series:sr(ds,10)},{chave:'terra',feito:true,carga:mx(te),series:sr(te,6)}],
-     feedback:i===4?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z'}));
+     feedback:i===4?'Pesado: perna cansada':'Ok',criado:ago(d)+'T19:00:00Z',resposta:i===3?'Boa! Semana que vem sobe 2,5 kg <b>no supino</b>.':null,respondido_em:i===3?ago(2)+'T10:00:00Z':null,lido_aluno:i===3?false:true}));
    db.apice_treinos_feitos.push({id:'fx',aluno_id:'a1',data:ago(30),treino:'Treino C',exercicios:[{chave:'supino',feito:true,carga:'67,5 kg'},{chave:'agachamento',feito:true,carga:'100 kg'}],feedback:'Ok',criado:ago(30)+'T19:00:00Z'});
    const it=(chave,series,reps,carga,descanso,obs)=>({chave,series,reps,carga:carga||null,descanso:descanso||null,obs:obs||null});
    db.apice_exercicios=[{id:'ex1',personal_id:'p1',nome:'Cadeira extensora',grupo:'Pernas',musculos:['quadriceps'],equip:'Máquina',obs:'Ajuste o encosto para o joelho ficar alinhado com o eixo da máquina.',video_url:'https://www.youtube.com/watch?v=exemplo',criado:ago(20)+'T10:00:00Z'}];
@@ -686,7 +709,7 @@ function makeFake(kind){
       const rows=db[this.t];let out;
       const match=r=>vis(this.t,r)&&this.f.every(([c,v])=>r[c]===v);
       if(this.op==='insert'){const n=Object.assign({id:'n'+(++seq),criado:new Date().toISOString()},this.pay);rows.push(n);out=[n]}
-      else if(this.op==='update'){out=rows.filter(match);out.forEach(r=>Object.assign(r,this.pay))}
+      else if(this.op==='update'){out=rows.filter(match);out.forEach(r=>{Object.assign(r,this.pay);if(this.t==='apice_treinos_feitos'&&'resposta' in this.pay&&cur&&cur.id==='p1'){const v=String(r.resposta||'').trim();r.resposta=v||null;r.respondido_em=new Date().toISOString();r.lido_aluno=!v}})}
       else if(this.op==='delete'){out=rows.filter(match);out.forEach(r=>rows.splice(rows.indexOf(r),1))}
       else{out=rows.filter(match);if(this.o){const [c,asc]=this.o;out=out.slice().sort((x,y)=>(String(x[c])<String(y[c])?-1:String(x[c])>String(y[c])?1:0)*(asc?1:-1))}}
       out=out.map(r=>JSON.parse(JSON.stringify(r)));
@@ -1213,8 +1236,34 @@ function treinoAlunoCard(a){
   return`<div class="card" id="fichasCard">${lista}<div style="display:flex;gap:8px;${fs.length?'margin-top:12px':''}"><button class="btn" style="height:46px;font-size:14px" onclick="montarTreino('${id}')">${I.plus} Montar treino</button><button class="btn ghost" style="height:46px;font-size:14px" onclick="copiarDeSheet('${id}')">Copiar de…</button></div></div>`;
 }
 function histTreino(t){
-  const ex=Array.isArray(t.exercicios)?t.exercicios:[],f=ex.filter(e=>e.feito).length;
-  return`<div class="hist"><div style="display:flex;justify-content:space-between"><b>${esc(t.treino||'Treino')}</b><span style="color:var(--mute)">${fmtD(t.data)}</span></div><small>${f} de ${ex.length} exercícios${t.feedback?' · '+esc(t.feedback):''}</small></div>`;
+  const ex=Array.isArray(t.exercicios)?t.exercicios:[],f=ex.filter(e=>e.feito).length,tid=esc(t.id);
+  let r='';
+  if(eP()){
+    const a=aluno(t.aluno_id),wa=a&&waResp(a,t);
+    if(S.respEd===t.id)r=`<div class="resp-f"><textarea id="rs-${tid}" maxlength="500" placeholder="Responda o feedback do aluno" oninput="document.getElementById('rc-${tid}').textContent=this.value.length+'/500'">${esc(t.resposta||'')}</textarea><div class="cnt" id="rc-${tid}">${String(t.resposta||'').length}/500</div><div class="resp-a"><button class="mini" id="rb-${tid}" onclick="salvarResposta('${tid}')">Enviar</button><button class="mini" onclick="S.respEd=null;rr()">Cancelar</button></div></div>`;
+    else if(t.resposta)r=`<div class="resp"><b>Sua resposta${t.respondido_em?' · '+esc(fmtDC(t.respondido_em)):''}</b>${esc(t.resposta)}</div><div class="resp-a"><button class="mini" onclick="S.respEd='${tid}';rr()">Editar</button>${wa?`<a href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>`;
+    else r=`<div class="resp-a"><button class="mini" onclick="S.respEd='${tid}';rr()">Responder</button>${wa?`<a href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>`;
+  }else if(t.resposta)r=`<div class="resp"><b>Resposta do seu personal${t.respondido_em?' · '+esc(fmtDC(t.respondido_em)):''}</b>${esc(t.resposta)}</div>`;
+  return`<div class="hist" id="h-${tid}"><div style="display:flex;justify-content:space-between"><b>${esc(t.treino||'Treino')}</b><span style="color:var(--mute)">${fmtD(t.data)}</span></div><small>${f} de ${ex.length} exercícios${t.feedback?' · '+esc(t.feedback):''}</small>${r}</div>`;
+}
+function waResp(a,t){
+  let d=String(a.telefone||'').replace(/\D/g,'');if(!d)return null;if(d.length<=11)d='55'+d;
+  return'https://wa.me/'+d+'?text='+encodeURIComponent(`Oi ${String(a.nome).trim().split(/\s+/)[0]}! Vi seu feedback do ${t.treino||'treino'} de ${fmtDC(t.data)}.${t.resposta?' '+t.resposta:''}`);
+}
+async function salvarResposta(id){
+  const el=document.getElementById('rs-'+id);if(!el)return;const v=el.value.trim().slice(0,500);
+  busy('rb-'+id,true,'Enviando…');
+  try{const r=await Q(sb.from('apice_treinos_feitos').update({resposta:v||null}).eq('id',id).select().single());
+    for(const k in S.trs){const t=S.trs[k].find(x=>x.id===id);if(t)Object.assign(t,r)}
+    S.respEd=null;rr();toast(v?'Resposta enviada':'Resposta removida');if(v)avisar('apice_treinos_feitos',id)}
+  catch(e){busy('rb-'+id,false,'Enviar');toast(traduzErro(e))}
+}
+const naoLidos=a=>trsDe(a.id).filter(t=>t.resposta&&t.lido_aluno===false);
+async function verRespostas(){
+  const a=S.alunos[0];if(!a)return;const l=naoLidos(a);
+  l.forEach(t=>{t.lido_aluno=true});rr();
+  const e=document.getElementById('ultTreinos');if(e)e.scrollIntoView({behavior:'smooth',block:'start'});
+  for(const t of l){try{await sb.from('apice_treinos_feitos').update({lido_aluno:true}).eq('id',t.id)}catch(_){}}
 }
 async function convidar(id){
   const a=aluno(id);busy('bt-conv',true,'Enviando…');
@@ -1321,6 +1370,7 @@ V.hoje=()=>{
    <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${esc(dia.n.toUpperCase())}${pl.ficha?'':' · '+LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${esc(dia.f||dia.n)}</h4><p style="max-width:none">${esc(pl.ficha?dia.ex.length+(dia.ex.length===1?' exercício':' exercícios'):pl.tempo)}</p></div></div></div>
   ${mensalAlunoTopo(a)}
   ${dia.obs?`<div class="alert" style="cursor:default"><i style="background:var(--palco)"></i><div><b>Recado do seu personal</b><small style="color:#CFCAC1">${esc(dia.obs)}</small></div></div>`:''}
+  ${naoLidos(a).length?`<div class="alert" id="seloResp" onclick="verRespostas()"><i style="background:var(--red)"></i><div><b>Seu personal respondeu</b><small>${naoLidos(a).length===1?'Toque para ver a resposta do '+esc(naoLidos(a)[0].treino||'treino'):'Toque para ver as '+naoLidos(a).length+' respostas'}</small></div></div>`:''}
   ${ja?`<div class="alert"><i style="background:var(--base)"></i><div><b>Você já treinou hoje</b><small>${esc(ja.treino)} registrado. Pode fazer outro se quiser.</small></div></div>`:''}
   <div class="grid2"><div class="kpi"><small>Sequência</small><b>${sequencia(a.id)} ${sequencia(a.id)===1?'dia':'dias'}</b><span style="color:var(--mute)">dias seguidos treinando</span></div>
    <div class="kpi"><small>Últimos 7 dias</small><b>${sem}</b><span style="color:var(--mute)">${sem===1?'treino registrado':'treinos registrados'}</span></div></div>
@@ -1333,7 +1383,7 @@ V.hoje=()=>{
    <span style="color:var(--dim);transform:rotate(${op?90:0}deg);display:grid" onclick="abrirEx('${ik}')">${I.chev}</span></div>
    ${op?`<div class="sers"><div class="sh"><span></span><span>${it.seg?'Segundos':'Reps'}</span><span>Carga (kg)</span><span></span></div>${f.series.map((x,n)=>`<div class="ser ${x.feito?'ok':''}"><span>${n+1}ª</span><input class="sin" inputmode="${it.seg?'numeric':'decimal'}" value="${esc(x.reps)}" placeholder="${it.seg?'s':'reps'}" oninput="setSer('${ik}',${n},'reps',this.value)" aria-label="Repetições da série ${n+1}"><input class="sin" inputmode="decimal" value="${esc(x.carga)}" placeholder="kg" oninput="setSer('${ik}',${n},'carga',this.value)" aria-label="Carga da série ${n+1}"><button class="sok ${x.feito?'on':''}" onclick="serieOk('${ik}',${n})" aria-label="Série ${n+1} feita">✓</button></div>`).join('')}</div>`:''}</div>`}).join('')}</div>
   <button class="btn" onclick="feedbackSheet()" ${feitos?'':'disabled'}>Concluir treino</button>
-  ${trs.length?`<div class="lbl">Últimos treinos</div><div class="card" style="padding:4px 16px">${trs.slice(0,5).map(histTreino).join('')}</div>`:''}`;
+  ${trs.length?`<div class="lbl" id="ultTreinos">Últimos treinos</div><div class="card" style="padding:4px 16px">${trs.filter((t,i)=>i<5||(t.resposta&&t.lido_aluno===false)).map(histTreino).join('')}</div>`:''}`;
 };
 /* ---- plano do aluno: fichas do personal ou programa padrão do nível ---- */
 const REST_S={base:60,forte:90,palco:120};

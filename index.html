@@ -627,6 +627,36 @@ function fakeGo(){
     await verRespostas();await new Promise(r=>setTimeout(r,500));
     const bd=await Q(sb.from('apice_treinos_feitos').select('*').eq('id','f3'));L.push('seloAposVer='+!!$('seloResp')+' lido_banco='+bd[0].lido_aluno+' balaoAinda='+!!document.querySelector('#h-f3 .resp')+' semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
     }catch(e){L.push('ERRO '+(e&&e.message||e))}document.title='TESTEALUNORESPOSTA '+L.join(' | ')})()}
+  else if(t==='fotosdemo'){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}];render();setTimeout(()=>{const e=$('fotosCard');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-20)},700)}
+  else if(t==='testefotos'||t==='testealunofotos'){(async()=>{const L=[],pers=t==='testefotos',wt=ms=>new Promise(r=>setTimeout(r,ms));try{
+    if(pers){S.tab='alunos';S.stack=[{type:'aluno',id:'a1'}]}else S.tab='evol';render();await wt(600);
+    L.push('secao='+!!$('fotosCard')+' btnAdd='+/Adicionar fotos/.test($('fotosCard').innerHTML)+' miniSeed='+document.querySelectorAll('#fotosCard .fth img').length);
+    const antes=(await Q(sb.from('apice_fotos').select('*').eq('aluno_id','a1'))).length;
+    if(QS.get('semcib'))window.createImageBitmap=undefined;fotosSheet('a1');
+    const mk=async(w,h,cor)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle=cor;x.fillRect(0,0,w,h);x.fillStyle='#fff';x.fillRect(w/4,h/4,w/2,h/2);return new Promise(r=>c.toBlob(b=>r(new File([b],'f.png',{type:'image/png'})),'image/png'))};
+    const cores={frente:'#c33',lado:'#3c3',costas:'#33c'};
+    for(const k of ['frente','lado','costas']){const dtf=new DataTransfer();dtf.items.add(await mk(2600,1950,cores[k]));const i=$('ft-in-'+k);i.files=dtf.files;await fotoEscolhida(k,i)}
+    const bl=S.ft.blobs;const dims=await Promise.all(Object.values(bl).map(b=>new Promise(r=>{const u=URL.createObjectURL(b),im=new Image();im.onload=()=>r(im.naturalWidth+'x'+im.naturalHeight);im.src=u})));
+    L.push('previas='+document.querySelectorAll('[id^=ft-pv-] img').length+' comprimido='+dims.join(',')+' tipo='+Object.values(bl).map(b=>b.type).join(',')+' kb='+Object.values(bl).map(b=>Math.round(b.size/1024)).join(',')+' fs='+getComputedStyle($('ft-data')).fontSize);
+    $('ft-data').value=hoje();
+    /* erro de decodificação */
+    const ruim=new DataTransfer();ruim.items.add(new File(['nao e imagem'],'x.heic',{type:'image/heic'}));$('ft-in-lado').files=ruim.files;await fotoEscolhida('lado',$('ft-in-lado'));L.push('erroAmigavel='+$('msg').textContent);
+    const dt2=new DataTransfer();dt2.items.add(await mk(1000,800,cores.lado));$('ft-in-lado').files=dt2.files;await fotoEscolhida('lado',$('ft-in-lado'));
+    await fotosSalvar();await wt(500);
+    const rows=(await Q(sb.from('apice_fotos').select('*').eq('aluno_id','a1')));const novas=rows.filter(r=>r.data===hoje());
+    L.push('linhasNovas='+(rows.length-antes)+' caminhoOk='+novas.every(r=>r.caminho.startsWith('a1/'+hoje()+'-'+r.angulo+'-')&&r.caminho.endsWith('.jpg'))+' storage='+novas.map(r=>window.__storage[r.caminho]?window.__storage[r.caminho].type:'FALTA').join(','));
+    await wt(500);L.push('miniaturas='+document.querySelectorAll('#fotosCard .fth img').length+' grupos='+document.querySelectorAll('#fotosCard .fth').length+' toast='+$('toast').textContent);
+    fotosComparar('a1');await wt(300);L.push('comparar imgs='+document.querySelectorAll('.cmp-img').length+' selects='+document.querySelectorAll('#fc-d1,#fc-d2').length);
+    S.fc.ang='costas';fotosCompHTML();await wt(200);L.push('costas imgs='+document.querySelectorAll('.cmp-img').length);closeSheet();
+    const alvo=novas.find(r=>r.angulo==='frente');fotoVer(alvo.id);await wt(200);L.push('grande='+!!$('foto-grande')+' src='+!!$('foto-grande').getAttribute('src'));
+    fotoApagar(alvo.id);$('cf-ok').click();await wt(600);
+    const dep=(await Q(sb.from('apice_fotos').select('*').eq('aluno_id','a1')));L.push('apagou tabela='+(rows.length-dep.length)+' storage='+(!window.__storage[alvo.caminho])+' toast='+$('toast').textContent);
+    /* rollback: insert falha apaga arquivo */
+    const o=sb.from.bind(sb);const antesMem=Object.keys(window.__storage).length;sb.from=tt=>{const q=o(tt);if(tt==='apice_fotos'&&q.insert){q.insert=()=>{q.run=async()=>({data:null,error:{message:'falha'}});return q}}return q};
+    fotosSheet('a1');const d3=new DataTransfer();d3.items.add(await mk(800,600,'#999'));$('ft-in-frente').files=d3.files;await fotoEscolhida('frente',$('ft-in-frente'));await fotosSalvar();await wt(400);sb.from=o;
+    L.push('rollbackStorage='+(Object.keys(window.__storage).length===antesMem)+' msg='+$('msg').textContent);closeSheet();
+    const h=$('view').innerHTML;L.push('semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
+    }catch(e){L.push('ERRO '+(e&&e.message||JSON.stringify(e)))}document.title=(pers?'TESTEFOTOS ':'TESTEALUNOFOTOS ')+L.join(' | ')})()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
   else if(t==='perfil'){perfilSheet()}
@@ -663,7 +693,7 @@ function makeFake(kind){
   let cur=kind==='personal'||kind==='vazio'?P:kind==='aluno'?U:null;
   const db={
    apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal',pix_tipo:'email',pix_chave:'brenno@exemplo.com',pix_nome:'Brenno Assis'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
-   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[],apice_fichas:[],apice_exercicios:[]};
+   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[],apice_fichas:[],apice_exercicios:[],apice_fotos:[]};
   if(kind!=='vazio'){
    db.apice_alunos=[
     {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,mensalidade:150,vencimento_dia:10,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
@@ -690,6 +720,9 @@ function makeFake(kind){
     {id:'fi1',personal_id:'p1',aluno_id:'a1',nome:'Treino A',foco:'Peito, ombro e tríceps',ordem:0,exercicios:[it('supino',4,'8–10','80 kg',90,'Descida em 3 segundos, sem quicar'),it('desenvolvimento',3,'10','40 kg',75),it('triceps',3,'12')],obs:'Aqueça 10 min na esteira antes de começar.',criado:ago(12)+'T10:00:00Z'},
     {id:'fi2',personal_id:'p1',aluno_id:'a1',nome:'Treino B',foco:'Pernas',ordem:1,exercicios:[it('agachamento',4,'10','100 kg',120),it('p:ex1',3,'12','45 kg',60,'Segure 1 segundo no topo'),it('panturrilha',4,'15',null,45)],obs:'Foque na técnica, sem pressa.',criado:ago(12)+'T10:01:00Z'}];
   }
+  if(kind!=='vazio')['frente','lado','costas'].forEach(k=>db.apice_fotos.push({id:'ph-'+k,aluno_id:'a1',registro_id:null,data:ago(30),angulo:k,caminho:'a1/seed-'+k+'.jpg',criado_por:'p1',criado:ago(30)+'T10:00:00Z'}));
+  const mem=window.__storage={};
+  const placeholder=p=>{const c=document.createElement('canvas');c.width=60;c.height=80;const x=c.getContext('2d');let h=0;for(const ch of p)h=(h*31+ch.charCodeAt(0))%360;x.fillStyle='hsl('+h+',40%,40%)';x.fillRect(0,0,60,80);return c.toDataURL('image/jpeg')};
   const vis=(t,r)=>{
     if(t==='apice_fichas')return !!cur&&(r.personal_id===cur.id||db.apice_alunos.some(a=>a.id===r.aluno_id&&a.user_id===cur.id));
     if(t==='apice_exercicios')return !!cur&&(r.personal_id===cur.id||db.apice_alunos.some(a=>a.user_id===cur.id&&a.personal_id===r.personal_id));
@@ -730,6 +763,12 @@ function makeFake(kind){
     async signOut(){cur=null;emit('SIGNED_OUT');return{error:null}},
     async updateUser(){return{data:{user:cur},error:null}}
    },
+   storage:{from:b=>({
+     async upload(p,blob,opts){await new Promise(r=>setTimeout(r,80));if(!cur)return{data:null,error:{message:'sem sessão'}};if(!p.startsWith(db.apice_alunos.find(a=>a.personal_id===cur.id||a.user_id===cur.id).id+'/')&&!db.apice_alunos.some(a=>(a.personal_id===cur.id||a.user_id===cur.id)&&p.startsWith(a.id+'/')))return{data:null,error:{message:'new row violates row-level security policy'}};
+       if(blob.size>3*1024*1024)return{data:null,error:{message:'The object exceeded the maximum allowed size'}};
+       mem[p]={blob,type:(opts&&opts.contentType)||blob.type,size:blob.size};return{data:{path:p},error:null}},
+     async createSignedUrls(ps,exp){await new Promise(r=>setTimeout(r,60));return{data:ps.map(p=>({path:p,error:null,signedUrl:mem[p]?URL.createObjectURL(mem[p].blob):placeholder(p)})),error:null}},
+     async remove(ps){await new Promise(r=>setTimeout(r,60));ps.forEach(p=>delete mem[p]);return{data:ps.map(p=>({name:p})),error:null}}})},
    from:t=>new QB(t),
    rpc:async(n)=>{await new Promise(r=>setTimeout(r,100));if(n!=='apice_pix_do_meu_personal')return{data:null,error:{message:'rpc desconhecida'}};const p=db.apice_perfis[0];return{data:[{pix_tipo:p.pix_tipo,pix_chave:p.pix_chave,pix_nome:p.pix_nome,personal_nome:p.nome}],error:null}},
    functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));if(n==='apice-notificar'){(window.__push=window.__push||[]).push(body);return{data:{ok:true,enviados:0},error:null}}const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
@@ -824,7 +863,7 @@ async function sair(){
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
-function resetEstado(){REST.fim=null;Object.assign(S,{user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
+function resetEstado(){REST.fim=null;if(S.fotos){S.fotos={};S.fu={};S.fCarr={}}Object.assign(S,{user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
 
 /* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
 function iniciar(){
@@ -1167,7 +1206,7 @@ function avaliacoesHTML(a){
     return`<div class="hist"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>${fmtD(r.data)}</b>
      <span style="font-weight:700">${r.peso!=null?nf(r.peso)+' kg':''}${r.gordura!=null?` · ${nf(r.gordura)}%`:''}</span></div>
      ${m?`<small>${esc(m)} (cm)</small>`:''}${r.obs?`<small>${esc(r.obs)}</small>`:''}
-     ${pode?`<div style="display:flex;gap:8px;margin-top:8px"><button class="mini" onclick="avalSheet('${esc(a.id)}','${esc(r.id)}')">Editar</button><button class="mini red" onclick="apagarReg('${esc(a.id)}','${esc(r.id)}')">Apagar</button></div>`:''}</div>`}).join('');
+     ${pode?`<div style="display:flex;gap:8px;margin-top:8px"><button class="mini" onclick="avalSheet('${esc(a.id)}','${esc(r.id)}')">Editar</button><button class="mini" onclick="fotosSheet('${esc(a.id)}','${esc(r.id)}','${esc(String(r.data).slice(0,10))}')">Fotos</button><button class="mini red" onclick="apagarReg('${esc(a.id)}','${esc(r.id)}')">Apagar</button></div>`:''}</div>`}).join('');
 }
 function evolHTML(a){
   const pr=comPeso(a.id),p=pr.length?Number(pr[pr.length-1].peso):null,d=pr.length>1?p-Number(pr[0].peso):null;
@@ -1186,6 +1225,7 @@ function evolHTML(a){
   ${cargaCard(a)}
   <div class="card"><b style="font-size:15px">Medidas (cm)</b>
    ${med.length?`<table class="med" style="margin-top:6px"><tr><th></th><th>Início</th><th>Atual</th><th>Dif.</th></tr>${med.map(m=>{const df=m.f-m.i;const bom=(m.k==='cintura'||m.k==='quadril')?df<0:df>0;return`<tr><td>${m.n}</td><td>${nf(m.i)}</td><td><b>${nf(m.f)}</b></td><td class="${df===0?'':bom?'up':'dn'}">${df>0?'+':''}${nf(df)}</td></tr>`}).join('')}</table>`:'<p style="font-size:13px;color:var(--mute);padding-top:8px">Nenhuma medida registrada.</p>'}</div>
+  ${fotosCard(a)}
   <div class="lbl">Avaliações</div><div class="card" style="padding:4px 16px">${avaliacoesHTML(a)}</div>`;
 }
 V.evol=()=>{
@@ -1571,6 +1611,131 @@ function apagarReg(alunoId,regId){
     const {error}=await sb.from('apice_registros').delete().eq('id',regId);if(error)throw error;
     S.regs[alunoId]=S.regs[alunoId].filter(x=>x.id!==regId);closeSheet();render();toast('Avaliação apagada');
   });
+}
+
+/* ================= FOTOS DE EVOLUÇÃO ================= */
+const ANG=[['frente','Frente'],['lado','Lado'],['costas','Costas']];
+const FOTO_BUCKET='apice-fotos';
+Object.assign(S,{fotos:{},fu:{},fCarr:{},ft:null,fc:null});
+const fotosDe=id=>S.fotos[id]||[];
+const fotoUrl=c=>{const u=S.fu[c];return u&&u.exp>Date.now()?u.url:''};
+async function fotosUrls(rows){
+  const falta=rows.map(r=>r.caminho).filter(c=>!fotoUrl(c));
+  if(!falta.length)return;
+  try{const {data,error}=await sb.storage.from(FOTO_BUCKET).createSignedUrls(falta,3600);if(error)throw error;
+    (data||[]).forEach(x=>{if(x&&x.signedUrl)S.fu[x.path]={url:x.signedUrl,exp:Date.now()+55*60*1000}})}catch(_){}
+}
+function fotosPintar(id){const e=$('fotosCard');if(e&&e.dataset.aluno===id)e.innerHTML=fotosInner(aluno(id))}
+async function fotosCarregar(id,recarga){
+  if(S.fCarr[id])return;S.fCarr[id]=true;
+  try{
+    if(recarga||S.fotos[id]===undefined)S.fotos[id]=await Q(sb.from('apice_fotos').select('*').eq('aluno_id',id).order('data',{ascending:false}))||[];
+    await fotosUrls(S.fotos[id]);
+  }catch(e){if(S.fotos[id]===undefined)S.fotos[id]=[]}
+  finally{S.fCarr[id]=false}
+  fotosPintar(id);
+}
+function fotosGrupos(id){
+  const g={};fotosDe(id).forEach(f=>{const d=String(f.data).slice(0,10);(g[d]=g[d]||{})[f.angulo]=f});
+  return Object.keys(g).sort().reverse().map(d=>[d,g[d]]);
+}
+function fotosInner(a){
+  const id=a.id;
+  if(S.fotos[id]===undefined){setTimeout(()=>fotosCarregar(id),0);return'<p style="font-size:13px;color:var(--mute)">Carregando fotos…</p>'}
+  const gr=fotosGrupos(id);
+  if(fotosDe(id).some(f=>!fotoUrl(f.caminho))&&!S.fCarr[id])setTimeout(()=>fotosCarregar(id),0);
+  const lista=gr.length?gr.map(([d,m])=>`<div style="margin-top:12px"><b style="font-size:13px">${fmtD(d)}</b>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:6px">${ANG.map(([k,n])=>{const f=m[k];
+      return f?`<button type="button" class="fth" data-foto="${esc(f.id)}" onclick="fotoVer('${esc(f.id)}')" style="padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--s2);aspect-ratio:3/4;position:relative">${fotoUrl(f.caminho)?`<img src="${esc(fotoUrl(f.caminho))}" alt="${esc(n)}" style="width:100%;height:100%;object-fit:cover;display:block">`:''}<span style="position:absolute;left:0;right:0;bottom:0;font-size:11px;font-weight:700;background:#000a;color:#fff;padding:2px 0">${n}</span></button>`
+      :`<div style="border:1px dashed var(--line);border-radius:12px;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)">${n}</div>`}).join('')}</div></div>`).join('')
+    :'<p style="font-size:13px;color:var(--mute)">Nenhuma foto ainda. Frente, lado e costas mostram a evolução que a balança não mostra.</p>';
+  return`<div style="display:flex;gap:8px"><button class="btn" style="height:44px;font-size:14px" onclick="fotosSheet('${esc(id)}')">${I.plus} Adicionar fotos</button>${gr.length>1?`<button class="btn ghost" style="height:44px;font-size:14px" onclick="fotosComparar('${esc(id)}')">Comparar</button>`:''}</div>${lista}`;
+}
+const fotosCard=a=>`<div class="lbl">Fotos de evolução</div><div class="card" id="fotosCard" data-aluno="${esc(a.id)}">${fotosInner(a)}</div>`;
+function fotosSheet(alunoId,regId,data){
+  S.ft={alunoId,regId:regId||null,blobs:{}};
+  openSheet(`<h4>Fotos de evolução</h4>
+  ${inp('ft-data','Data',data||hoje(),'type="date"')}
+  ${ANG.map(([k,n])=>`<div class="fld"><label>${n}</label><div id="ft-pv-${k}" style="display:none;margin-bottom:6px"></div>
+   <input id="ft-in-${k}" type="file" accept="image/*" capture="environment" style="font-size:16px;height:auto;padding:10px 12px" onchange="fotoEscolhida('${k}',this)"></div>`).join('')}
+  <p style="font-size:12px;color:var(--mute);margin-bottom:10px">Pode enviar só as que tiver. As fotos ficam privadas: só você e ${eP()?'o aluno':'seu personal'} veem.</p>
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-ft" onclick="fotosSalvar()">Enviar fotos</button>`);
+}
+async function fotoComprimir(file){
+  let bmp=null,url=null,w,h,src;
+  try{
+    if(window.createImageBitmap){try{bmp=await Promise.race([createImageBitmap(file),new Promise(r=>setTimeout(()=>r(null),3000))])}catch(_){bmp=null}}
+    if(bmp){src=bmp;w=bmp.width;h=bmp.height}
+    else{url=URL.createObjectURL(file);const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=()=>no(new Error('dec'));im.src=url});src=im;w=im.naturalWidth;h=im.naturalHeight}
+    if(!w||!h)throw new Error('dec');
+    const k=Math.min(1,1280/Math.max(w,h)),cw=Math.round(w*k),ch=Math.round(h*k);
+    const c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cw,ch);x.drawImage(src,0,0,cw,ch);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.8));
+    if(!blob)throw new Error('dec');
+    return blob;
+  }catch(e){throw {message:'Não foi possível ler esta foto. Tente outra no formato JPEG ou PNG.'}}
+  finally{if(url)URL.revokeObjectURL(url);if(bmp&&bmp.close)bmp.close()}
+}
+async function fotoEscolhida(k,inpEl){
+  const f=inpEl.files&&inpEl.files[0];if(!f||!S.ft)return;
+  const pv=$('ft-pv-'+k);msg('');
+  try{const b=await fotoComprimir(f);S.ft.blobs[k]=b;
+    pv.style.display='block';pv.innerHTML=`<img alt="Prévia ${esc(k)}" src="${URL.createObjectURL(b)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;display:block">`}
+  catch(e){delete S.ft.blobs[k];inpEl.value='';pv.style.display='none';msg(traduzErro(e))}
+}
+async function fotosSalvar(){
+  const ft=S.ft;if(!ft)return;const data=val('ft-data');
+  if(!data){msg('Informe a data.');return}
+  const ks=ANG.map(x=>x[0]).filter(k=>ft.blobs[k]);
+  if(!ks.length){msg('Escolha ao menos uma foto.');return}
+  msg('');busy('bt-ft',true,'Enviando…');
+  let ok=0,falhou=false;
+  for(const k of ks){
+    const caminho=`${ft.alunoId}/${data}-${k}-${Date.now()}.jpg`;
+    try{
+      const up=await sb.storage.from(FOTO_BUCKET).upload(caminho,ft.blobs[k],{contentType:'image/jpeg',upsert:false});if(up.error)throw up.error;
+      const ins=await sb.from('apice_fotos').insert({aluno_id:ft.alunoId,registro_id:ft.regId,data,angulo:k,caminho}).select().single();
+      if(ins.error){try{await sb.storage.from(FOTO_BUCKET).remove([caminho])}catch(_){}throw ins.error}
+      (S.fotos[ft.alunoId]=S.fotos[ft.alunoId]||[]).push(ins.data);ok++;
+    }catch(e){falhou=true;msg(traduzErro(e));}
+  }
+  if(ok){await fotosUrls(fotosDe(ft.alunoId))}
+  if(falhou){busy('bt-ft',false);if(ok){fotosPintar(ft.alunoId);toast(ok+' enviada(s). Tente de novo as outras.')}return}
+  S.ft=null;closeSheet();rr();toast(ok===1?'Foto enviada':ok+' fotos enviadas');
+}
+function fotoVer(fid){
+  let f=null,aid=null;Object.keys(S.fotos).forEach(k=>{const x=S.fotos[k].find(y=>y.id===fid);if(x){f=x;aid=k}});if(!f)return;
+  const n=(ANG.find(x=>x[0]===f.angulo)||[0,f.angulo])[1];
+  openSheet(`<h4>${esc(n)} · ${fmtD(f.data)}</h4>
+  <img id="foto-grande" alt="${esc(n)}" src="${esc(fotoUrl(f.caminho))}" style="width:100%;max-height:70vh;object-fit:contain;border-radius:12px;background:var(--s2);display:block;margin-bottom:12px">
+  <button class="btn danger" onclick="fotoApagar('${esc(fid)}')">Apagar foto</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Fechar</button>`);
+}
+function fotoApagar(fid){
+  let f=null,aid=null;Object.keys(S.fotos).forEach(k=>{const x=S.fotos[k].find(y=>y.id===fid);if(x){f=x;aid=k}});if(!f)return;
+  confirmar('Apagar foto?',`A foto (${f.angulo}) de ${fmtD(f.data)} será removida definitivamente.`,'Sim, apagar',async()=>{
+    const r1=await sb.storage.from(FOTO_BUCKET).remove([f.caminho]);if(r1.error)throw r1.error;
+    const r2=await sb.from('apice_fotos').delete().eq('id',fid);if(r2.error)throw r2.error;
+    S.fotos[aid]=S.fotos[aid].filter(x=>x.id!==fid);delete S.fu[f.caminho];closeSheet();rr();toast('Foto apagada');
+  });
+}
+function fotosComparar(id){
+  const ds=fotosGrupos(id).map(x=>x[0]);if(ds.length<2)return;
+  S.fc={id,d1:ds[ds.length-1],d2:ds[0],ang:'frente'};fotosCompHTML();
+}
+function fotosCompHTML(){
+  const c=S.fc,gr=fotosGrupos(c.id),ds=gr.map(x=>x[0]);
+  const op=v=>ds.map(d=>`<option value="${esc(d)}"${d===v?' selected':''}>${fmtD(d)}</option>`).join('');
+  const cel=(d,t)=>{const m=(gr.find(x=>x[0]===d)||[0,{}])[1],f=m[c.ang];
+    return`<div style="min-width:0"><small style="display:block;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:4px">${t} · ${fmtD(d)}</small>${f&&fotoUrl(f.caminho)?`<img class="cmp-img" alt="${t}" src="${esc(fotoUrl(f.caminho))}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block">`:`<div style="aspect-ratio:3/4;border:1px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--dim);text-align:center;padding:6px">Sem foto de ${esc(c.ang)} nesta data</div>`}</div>`};
+  openSheet(`<h4>Comparar fotos</h4>
+  <div class="chips" style="margin:0 0 10px">${ANG.map(([k,n])=>`<button class="${c.ang===k?'on':''}" onclick="S.fc.ang='${k}';fotosCompHTML()">${n}</button>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px">
+   <div class="fld" style="margin:0"><label>Antes</label><select id="fc-d1" onchange="S.fc.d1=this.value;fotosCompHTML()">${op(c.d1)}</select></div>
+   <div class="fld" style="margin:0"><label>Depois</label><select id="fc-d2" onchange="S.fc.d2=this.value;fotosCompHTML()">${op(c.d2)}</select></div></div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px">${cel(c.d1,'Antes')}${cel(c.d2,'Depois')}</div>
+  <button class="btn ghost" onclick="closeSheet()">Fechar</button>`);
 }
 
 /* ================= MONTADOR DE TREINO ================= */

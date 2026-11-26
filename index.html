@@ -64,6 +64,17 @@ input,select{font:inherit}
 .chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none}
 .chips button{padding:8px 14px;border-radius:99px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute);white-space:nowrap}
 .chips button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{padding:10px 14px;border-radius:99px;border:1px solid var(--line);background:var(--s2);font-size:14px;font-weight:600;color:var(--mute);min-height:42px}
+.opts.yn button{flex:1;border-radius:14px}
+.opts button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
+.opts button.on.sim{background:var(--red);color:#fff;border-color:var(--red)}
+.pq{padding:10px 0;border-bottom:1px solid var(--line)}
+.pq p{font-size:14px;line-height:1.4;margin-bottom:8px;overflow-wrap:anywhere}
+.an-sim{color:var(--red2);font-weight:800}
+.anl{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;overflow-wrap:anywhere}
+.anl:last-child{border-bottom:0}
+.anl small{display:block;color:var(--mute);font-size:12px;margin-bottom:2px}
 .search{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:0 14px;height:44px;margin-bottom:12px;color:var(--mute)}
 .search input{flex:1;background:none;border:0;outline:0;color:var(--bone);font-size:16px}
 .bar{height:5px;border-radius:5px;background:var(--s3);overflow:hidden;margin-top:6px}
@@ -657,6 +668,41 @@ function fakeGo(){
     L.push('rollbackStorage='+(Object.keys(window.__storage).length===antesMem)+' msg='+$('msg').textContent);closeSheet();
     const h=$('view').innerHTML;L.push('semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
     }catch(e){L.push('ERRO '+(e&&e.message||JSON.stringify(e)))}document.title=(pers?'TESTEFOTOS ':'TESTEALUNOFOTOS ')+L.join(' | ')})()}
+  else if(t==='testeanamnese'){(async()=>{const L=[],wt=ms=>new Promise(r=>setTimeout(r,ms));try{
+    S.tab='alunos';S.stack=[];render();const ls=[...document.querySelectorAll('#lista .row')];
+    L.push('lista: alertas='+document.querySelectorAll('#lista .an-alerta').length+' (Lucas='+/⚠️/.test(ls.find(x=>/Lucas/.test(x.textContent)).innerHTML)+' Ana='+/⚠️/.test(ls.find(x=>/Ana/.test(x.textContent)).innerHTML)+')');
+    S.stack=[{type:'aluno',id:'a1'}];render();const c=$('anamCard').innerHTML;
+    L.push('a1 resumo: selo='+/⚠️ Atenção/.test(c)+' atualizada='+/Atualizada em \d\d\/\d\d/.test(c)+' parqSimVermelho='+document.querySelectorAll('#anamCard .an-sim').length+' lesao='+/Dor no joelho/.test(c)+' doencas='+/Hipertensão, Outra: Rinite/.test(c)+' editar='+/Editar/.test(c));
+    S.stack=[{type:'aluno',id:'a2'}];render();const c2=$('anamCard').innerHTML;L.push('a2: naoPreencheu='+/Aluno ainda não preencheu/.test(c2)+' btn='+/Preencher eu mesma/.test(c2)+' selo='+/Atenção/.test(c2));
+    anamSheet('a2');L.push('formulario: parq='+document.querySelectorAll('#an-parq .pq').length+' gestante(Ana)='+!!$('an-g-gestante')+' fs='+getComputedStyle($('an-lesoes')).fontSize+'/'+getComputedStyle($('an-sono')).fontSize);
+    for(let i=0;i<7;i++)anSet('q'+i,'nao');anSet('treinou','sim');anTog('dias','1');anTog('dias','3');anSet('tempo','45');anSet('objetivo','emagrecer');
+    $('an-gosta').value='Gosto de <b>pilates</b>';$('an-obs').value='<i>obs</i>';$('an-sono').value='7,5';
+    await anSalvar();await wt(600);
+    let rows=await Q(sb.from('apice_anamnese').select('*').eq('aluno_id','a2'));const r=rows[0];
+    L.push('upsert: linhas='+rows.length+' alerta='+(r&&r.alerta)+' preenchido_por='+(r&&r.preenchido_por)+' sono='+(r&&r.respostas.sono)+' dias='+(r&&r.respostas.dias)+' toast='+$('toast').textContent);
+    L.push('avisar='+(window.__push||[]).filter(x=>x.tabela==='apice_anamnese').length+' (personal nao avisa)');
+    const h=$('view').innerHTML;L.push('xss_ok='+(!h.includes('<b>pilates</b>')&&!h.includes('<i>obs</i>')&&h.includes('&lt;b&gt;pilates')));
+    L.push('apos salvar: selo='+/Atenção/.test($('anamCard').innerHTML)+' editar='+/Editar/.test($('anamCard').innerHTML));
+    anamSheet('a2');anSet('q0','sim');await anSalvar();await wt(600);rows=await Q(sb.from('apice_anamnese').select('*').eq('aluno_id','a2'));
+    L.push('editar(upsert): linhas='+rows.length+' alerta='+rows[0].alerta+' avisar='+(window.__push||[]).filter(x=>x.tabela==='apice_anamnese').length);
+    L.push('semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
+    }catch(e){L.push('ERRO '+(e&&e.message||JSON.stringify(e)))}document.title='TESTEANAMNESE '+L.join(' | ')})()}
+  else if(t==='testealunoanamnese'){(async()=>{const L=[],wt=ms=>new Promise(r=>setTimeout(r,ms));try{
+    render();L.push('card='+!!$('anamCard')+' txt='+(($('anamCard')||{}).textContent||'').slice(0,40));
+    L.push('unit alerta: tudoNao='+anAlerta({parq:['nao','nao','nao','nao','nao','nao','nao']})+' parqSim='+anAlerta({parq:['nao','nao','nao','nao','nao','nao','sim']})+' doenca='+anAlerta({parq:[],doencas:['asma']})+' lesao='+anAlerta({parq:[],lesoes:'dor'})+' gestante='+anAlerta({parq:[],gestante:'sim'})+' lesaoVazia='+anAlerta({parq:[],lesoes:'  '}));
+    $('anamCard').click();await wt(100);L.push('abriu='+!!$('an-parq')+' gestante(masc)='+!!$('an-g-gestante')+' outraOculta='+($('an-outra').style.display==='none')+' fs='+getComputedStyle($('an-obs')).fontSize);
+    anSet('q0','nao');await anSalvar();await wt(400);
+    let rows=await Q(sb.from('apice_anamnese').select('*').eq('aluno_id','a1'));
+    L.push('bloqueio: msg='+$('msg').textContent+' linhas='+rows.length+' avisar='+(window.__push||[]).filter(x=>x.tabela==='apice_anamnese').length);
+    for(let i=1;i<7;i++)anSet('q'+i,'nao');anTog('doencas','asma');anSet('treinou','nao');anSet('fuma','nao');$('an-sono').value='abc';await anSalvar();L.push('sonoInvalido='+$('msg').textContent);
+    $('an-sono').value='8';$('an-lesoes').value='';await anSalvar();await wt(600);
+    rows=await Q(sb.from('apice_anamnese').select('*').eq('aluno_id','a1'));const r=rows[0],pu=(window.__push||[]).filter(x=>x.tabela==='apice_anamnese');
+    L.push('salvou: linhas='+rows.length+' alerta='+(r&&r.alerta)+' (asma) doencas='+(r&&r.respostas.doencas)+' preenchido_por='+(r&&r.preenchido_por)+' toast='+$('toast').textContent);
+    L.push('avisar='+pu.length+' tabela='+(pu[0]&&pu[0].tabela)+' id_ok='+(pu[0]&&pu[0].id===(r&&r.id)));
+    L.push('card some='+!$('anamCard'));
+    perfilSheet();L.push('perfil btn='+/Minha anamnese · atualizada em \d\d\/\d\d/.test($('sheetIn').textContent));closeSheet();
+    L.push('semOverflow='+(document.documentElement.scrollWidth<=document.documentElement.clientWidth));
+    }catch(e){L.push('ERRO '+(e&&e.message||JSON.stringify(e)))}document.title='TESTEALUNOANAMNESE '+L.join(' | ')})()}
   else if(t==='aluno-sheet'){alunoSheet(a||null)}
   else if(t==='vazio'){}
   else if(t==='perfil'){perfilSheet()}
@@ -693,7 +739,7 @@ function makeFake(kind){
   let cur=kind==='personal'||kind==='vazio'?P:kind==='aluno'?U:null;
   const db={
    apice_perfis:[{id:'p1',nome:'Brenno Assis',papel:'personal',pix_tipo:'email',pix_chave:'brenno@exemplo.com',pix_nome:'Brenno Assis'},{id:'u1',nome:'Lucas Martins',papel:'aluno'}],
-   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[],apice_fichas:[],apice_exercicios:[],apice_fotos:[]};
+   apice_alunos:[],apice_registros:[],apice_treinos_feitos:[],apice_pagamentos:[],apice_fichas:[],apice_exercicios:[],apice_fotos:[],apice_anamnese:[]};
   if(kind!=='vazio'){
    db.apice_alunos=[
     {id:'a1',personal_id:'p1',user_id:'u1',nome:'Lucas Martins',email:'lucas@exemplo.com',telefone:'(11) 98888-7777',nascimento:'1991-04-12',altura:1.78,sexo:'masculino',nivel:'forte',objetivo:'Hipertrofia',meta_peso:84,nota:'Respondeu bem ao aumento de volume nas costas.',ativo:true,mensalidade:150,vencimento_dia:10,convidado_em:new Date(Date.now()-20*864e5).toISOString()},
@@ -720,6 +766,7 @@ function makeFake(kind){
     {id:'fi1',personal_id:'p1',aluno_id:'a1',nome:'Treino A',foco:'Peito, ombro e tríceps',ordem:0,exercicios:[it('supino',4,'8–10','80 kg',90,'Descida em 3 segundos, sem quicar'),it('desenvolvimento',3,'10','40 kg',75),it('triceps',3,'12')],obs:'Aqueça 10 min na esteira antes de começar.',criado:ago(12)+'T10:00:00Z'},
     {id:'fi2',personal_id:'p1',aluno_id:'a1',nome:'Treino B',foco:'Pernas',ordem:1,exercicios:[it('agachamento',4,'10','100 kg',120),it('p:ex1',3,'12','45 kg',60,'Segure 1 segundo no topo'),it('panturrilha',4,'15',null,45)],obs:'Foque na técnica, sem pressa.',criado:ago(12)+'T10:01:00Z'}];
   }
+  if(kind==='personal')db.apice_anamnese.push({id:'an1',aluno_id:'a1',alerta:true,preenchido_por:'u1',atualizado:ago(2)+'T10:00:00Z',criado:ago(2)+'T10:00:00Z',respostas:{parq:['nao','nao','nao','nao','sim','nao','nao'],lesoes:'Dor no joelho direito',doencas:['hipertensao','outra'],doenca_outra:'Rinite',remedios:'Losartana',cirurgias:'',sono:6.5,estresse:'medio',fuma:'nao',bebida:'as_vezes',agua:2,alimentacao:'Come fora no almoço',treinou:'sim',parado:'3 meses',gosta:'Gosta de musculação, não gosta de corrida',dias:['0','2','4'],tempo:'60',objetivo:'massa',obs:'Viaja a trabalho em algumas semanas'}});
   if(kind!=='vazio')['frente','lado','costas'].forEach(k=>db.apice_fotos.push({id:'ph-'+k,aluno_id:'a1',registro_id:null,data:ago(30),angulo:k,caminho:'a1/seed-'+k+'.jpg',criado_por:'p1',criado:ago(30)+'T10:00:00Z'}));
   const mem=window.__storage={};
   const placeholder=p=>{const c=document.createElement('canvas');c.width=60;c.height=80;const x=c.getContext('2d');let h=0;for(const ch of p)h=(h*31+ch.charCodeAt(0))%360;x.fillStyle='hsl('+h+',40%,40%)';x.fillRect(0,0,60,80);return c.toDataURL('image/jpeg')};
@@ -733,7 +780,7 @@ function makeFake(kind){
   };
   class QB{
     constructor(t){this.t=t;this.op='select';this.f=[];this.o=null;this.one=null;this.pay=null}
-    select(){return this} insert(p){this.op='insert';this.pay=p;return this} update(p){this.op='update';this.pay=p;return this} delete(){this.op='delete';return this}
+    select(){return this} upsert(p,o){this.op='upsert';this.pay=p;this.oc=o;return this} insert(p){this.op='insert';this.pay=p;return this} update(p){this.op='update';this.pay=p;return this} delete(){this.op='delete';return this}
     eq(c,v){this.f.push([c,v]);return this} order(c,o){this.o=[c,!(o&&o.ascending===false)];return this} limit(){return this}
     single(){this.one='single';return this} maybeSingle(){this.one='maybe';return this}
     then(a,b){return this.run().then(a,b)}
@@ -741,7 +788,9 @@ function makeFake(kind){
       await new Promise(r=>setTimeout(r,120));
       const rows=db[this.t];let out;
       const match=r=>vis(this.t,r)&&this.f.every(([c,v])=>r[c]===v);
-      if(this.op==='insert'){const n=Object.assign({id:'n'+(++seq),criado:new Date().toISOString()},this.pay);rows.push(n);out=[n]}
+      if(this.op==='upsert'){const ex=rows.find(r=>vis(this.t,r)&&r.aluno_id===this.pay.aluno_id);const ag=new Date().toISOString();
+        if(ex){Object.assign(ex,this.pay,{atualizado:ag,preenchido_por:cur.id});out=[ex]}else{const n=Object.assign({id:'n'+(++seq),criado:ag},this.pay,{atualizado:ag,preenchido_por:cur.id});rows.push(n);out=[n]}}
+      else if(this.op==='insert'){const n=Object.assign({id:'n'+(++seq),criado:new Date().toISOString()},this.pay);rows.push(n);out=[n]}
       else if(this.op==='update'){out=rows.filter(match);out.forEach(r=>{Object.assign(r,this.pay);if(this.t==='apice_treinos_feitos'&&'resposta' in this.pay&&cur&&cur.id==='p1'){const v=String(r.resposta||'').trim();r.resposta=v||null;r.respondido_em=new Date().toISOString();r.lido_aluno=!v}})}
       else if(this.op==='delete'){out=rows.filter(match);out.forEach(r=>rows.splice(rows.indexOf(r),1))}
       else{out=rows.filter(match);if(this.o){const [c,asc]=this.o;out=out.slice().sort((x,y)=>(String(x[c])<String(y[c])?-1:String(x[c])>String(y[c])?1:0)*(asc?1:-1))}}
@@ -863,7 +912,7 @@ async function sair(){
   try{await sb.auth.signOut()}catch(e){}
   resetEstado();S.screen='login';render();
 }
-function resetEstado(){REST.fim=null;if(S.fotos){S.fotos={};S.fu={};S.fCarr={}}Object.assign(S,{user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
+function resetEstado(){REST.fim=null;S.anam=null;S.an=null;if(S.fotos){S.fotos={};S.fu={};S.fCarr={}}Object.assign(S,{user:null,perfil:null,fichas:[],exps:[],ed:null,sel:null,cr:null,alunos:[],regs:{},trs:{},pags:{},pix:null,tab:'painel',stack:[],dia:null,feitos:{},aberto:null,cex:null,recovery:false,pwdDone:false});closeSheet()}
 
 /* NUNCA dar await no Supabase dentro do callback: sempre via setTimeout */
 function iniciar(){
@@ -906,6 +955,7 @@ async function carregarTudo(){
     S.pags={};S.pix=null;S.fichas=[];S.exps=[];
     try{S.fichas=await Q(sb.from('apice_fichas').select('*').order('ordem'))||[]}catch(_){S.fichas=[]}
     try{S.exps=await Q(sb.from('apice_exercicios').select('*').order('nome'))||[]}catch(_){S.exps=[]}
+    try{const an=await Q(sb.from('apice_anamnese').select('*'));S.anam={};(an||[]).forEach(r=>{S.anam[r.aluno_id]=r})}catch(_){S.anam=null}
     try{const pg=await Q(sb.from('apice_pagamentos').select('*').order('competencia'));pg.forEach(r=>{(S.pags[r.aluno_id]=S.pags[r.aluno_id]||[]).push(r)})}catch(_){}
     if(p.papel!=='personal'){try{const px=await Q(sb.rpc('apice_pix_do_meu_personal'));S.pix=Array.isArray(px)?px[0]||null:px||null}catch(_){S.pix=null}}
     S.regs={};S.trs={};S.alunos.forEach(a=>{S.regs[a.id]=[];S.trs[a.id]=[]});
@@ -1015,7 +1065,7 @@ function perfilSheet(){
   openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
   <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">📲 Instalar no celular</button>
   ${pushOk()||(SO==='ios'&&!INSTALADO())?'<button class="btn ghost" style="margin-bottom:8px" onclick="ativarPush()">'+(pushPerm()==='granted'?'🔔 Notificações ativadas ✓':'🔔 Ativar notificações')+'</button>':''}
-  ${eP()?pixBloco():`<button class="btn ghost" style="margin-bottom:8px" onclick="mensalSheet()">💳 Minha mensalidade</button>`}
+  ${eP()?pixBloco():`<button class="btn ghost" style="margin-bottom:8px" onclick="mensalSheet()">💳 Minha mensalidade</button>${anamPerfilBtn()}`}
   <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
 }
 
@@ -1187,7 +1237,7 @@ function listaAlunos(){
     const pr=comPeso(a.id),p=pr.length?Number(pr[pr.length-1].peso):null,d=pr.length>1?p-Number(pr[0].peso):null;
     const st=a.user_id?'usa o app':a.convidado_em?'convite enviado':'sem acesso';
     return`<div class="row" onclick="go({type:'aluno',id:'${esc(a.id)}'})"><div class="av" style="border-color:${(LV[a.nivel]||LV.base).hex}66">${esc(ini(a.nome))}</div>
-    <div class="t"><b>${esc(a.nome)}${a.ativo===false?' (inativo)':''}</b><small>${esc(a.objetivo||'Sem objetivo definido')} · ${st}</small></div>
+    <div class="t"><b>${esc(a.nome)}${a.ativo===false?' (inativo)':''}${anAlertaDe(a.id)?' <span class="an-alerta" title="Anamnese com atenção">⚠️</span>':''}</b><small>${esc(a.objetivo||'Sem objetivo definido')} · ${st}</small></div>
     <div style="text-align:right">${badge(a.nivel)}<small style="display:block;font-size:12px;margin-top:6px;font-weight:700;color:var(--mute)">${p!=null?nf(p)+' kg':'sem peso'}${d!=null&&d!==0?` <span class="${d<0?'up':'dn'}">${d>0?'+':''}${nf(d)}</span>`:''}</small></div></div>`}).join('');
 }
 V.alunos=()=>`<div class="hd"><div><p>${S.alunos.length} na sua carteira</p><h2>Alunos</h2></div><button class="av" onclick="novoAluno()" style="color:var(--red)" aria-label="Novo aluno">${I.plus}</button></div>
@@ -1254,6 +1304,7 @@ V.aluno=v=>{
   <div class="prof"><div class="av" style="border:2px solid ${lv.hex}">${esc(ini(a.nome))}</div><div><h3>${esc(a.nome)}</h3>
    <p>${[idd!=null?idd+' anos':'',a.altura?nf(a.altura,2)+' m':'',a.objetivo].filter(Boolean).map(esc).join(' · ')||'Sem dados complementares'}</p><div style="margin-top:6px">${badge(a.nivel)}</div></div></div>
   <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn ghost" style="height:42px;font-size:13px" onclick="alunoSheet('${esc(id)}')">Editar dados</button><button class="btn" style="height:42px;font-size:13px" onclick="avalSheet('${esc(id)}')">${I.plus} Nova avaliação</button></div>
+  ${anamCardPersonal(a)}
   <div class="lbl" style="margin-top:4px">Treino do aluno</div>
   ${treinoAlunoCard(a)}
   ${mensalCardPersonal(a)}
@@ -1317,6 +1368,117 @@ async function convidar(id){
     toast(sit==='ja_tem_acesso'?'Este aluno já tem acesso ao app':sit==='ligado_a_conta_existente'?'Aluno ligado à conta que ele já tinha':'Convite enviado por e-mail');
   }catch(e){toast(e&&e.proprio?e.message:traduzErro(e))}
   render();
+}
+
+/* ---- anamnese ---- */
+const PARQ=['Algum médico já disse que você tem problema de coração e só deve fazer atividade física recomendada por médico?','Sente dor no peito quando faz atividade física?','No último mês, sentiu dor no peito sem estar fazendo atividade física?','Perde o equilíbrio por tontura ou já desmaiou?','Tem problema nos ossos ou articulações que pode piorar com exercício?','Toma remédio para pressão ou coração?','Sabe de algum outro motivo para não fazer atividade física?'];
+const SN=[['sim','Sim'],['nao','Não']];
+const OPC={gestante:SN,fuma:SN,treinou:SN,estresse:[['baixo','Baixo'],['medio','Médio'],['alto','Alto']],bebida:[['nunca','Nunca'],['as_vezes','Às vezes'],['frequente','Frequente']],
+ doencas:[['hipertensao','Hipertensão'],['diabetes','Diabetes'],['asma','Asma'],['colesterol','Colesterol alto'],['tireoide','Problema de tireoide'],['outra','Outra']],
+ dias:[['0','Seg'],['1','Ter'],['2','Qua'],['3','Qui'],['4','Sex'],['5','Sáb'],['6','Dom']],
+ tempo:[['30','30 min'],['45','45 min'],['60','60 min'],['90','90 min']],
+ objetivo:[['emagrecer','Emagrecer'],['massa','Ganhar massa'],['condicionamento','Condicionamento'],['saude','Saúde'],['performance','Performance'],['outro','Outro']]};
+const ANMULTI={doencas:1,dias:1};
+const anOk=()=>S.anam!=null;
+const anLabel=(k,v)=>((OPC[k]||[]).find(x=>x[0]===String(v))||[0,v])[1];
+function anAlerta(r){r=r||{};return (r.parq||[]).some(x=>x==='sim')||(r.doencas||[]).length>0||String(r.lesoes||'').trim()!==''||r.gestante==='sim'}
+const anAlertaDe=id=>!!(S.anam&&S.anam[id]&&S.anam[id].alerta);
+function anGet(k){const r=S.an.r;return /^q\d$/.test(k)?r.parq[+k[1]]:r[k]}
+function anBtns(k){
+  const q=/^q\d$/.test(k),op=q?SN:OPC[k],v=anGet(k);
+  return op.map(([o,n])=>{const on=ANMULTI[k]?(v||[]).includes(o):v===o;return`<button type="button" class="${on?'on':''}${on&&q&&o==='sim'?' sim':''}" aria-pressed="${on}" onclick="${ANMULTI[k]?'anTog':'anSet'}('${k}','${o}')">${esc(n)}</button>`}).join('');
+}
+const anGrupo=(k,yn)=>`<div class="opts${yn?' yn':''}" id="an-g-${k}">${anBtns(k)}</div>`;
+function anVis(){
+  const r=S.an.r,o=$('an-outra'),p=$('an-parado');
+  if(o)o.style.display=(r.doencas||[]).includes('outra')?'':'none';
+  if(p)p.style.display=r.treinou==='sim'?'':'none';
+}
+function anRef(k){const e=$('an-g-'+k);if(e)e.innerHTML=anBtns(k);anVis()}
+function anSet(k,v){if(!S.an)return;if(/^q\d$/.test(k))S.an.r.parq[+k[1]]=v;else S.an.r[k]=S.an.r[k]===v&&!/^q/.test(k)?null:v;anRef(k)}
+function anTog(k,v){if(!S.an)return;const l=S.an.r[k]=S.an.r[k]||[],i=l.indexOf(v);if(i<0)l.push(v);else l.splice(i,1);anRef(k)}
+function anamSheet(alunoId){
+  const a=aluno(alunoId);if(!a)return;
+  const row=S.anam&&S.anam[alunoId],base=JSON.parse(JSON.stringify((row&&row.respostas)||{}));
+  const r=Object.assign({},base,{parq:[0,1,2,3,4,5,6].map(i=>(base.parq||[])[i]||null),doencas:base.doencas||[],dias:base.dias||[]});
+  S.an={alunoId,r};
+  const fem=a.sexo!=='masculino',t=(id,l,v,ph)=>`<div class="fld"><label>${l}</label><textarea id="${id}" maxlength="500" placeholder="${ph||''}">${esc(v||'')}</textarea></div>`;
+  const num=(id,l,v,ph)=>`<div class="fld"><label>${l}</label><input id="${id}" inputmode="decimal" maxlength="5" placeholder="${ph||''}" value="${esc(v==null?'':String(v).replace('.',','))}"></div>`;
+  const grp=(l,k,yn)=>`<div class="fld"><label>${l}</label>${anGrupo(k,yn)}</div>`;
+  openSheet(`<h4>Anamnese${eP()?' de '+esc(a.nome):''}</h4>
+  <p class="note" style="margin-bottom:6px">${eP()?'Você está preenchendo pelo aluno. ':''}Leva uns 2 minutos. Só as 7 perguntas de saúde são obrigatórias, o resto é opcional.${row&&row.atualizado?' <b>Atualizada em '+esc(fmtDC(row.atualizado))+'</b>':''}</p>
+  <div class="lbl" style="margin-top:14px">Saúde do coração e do corpo (obrigatório)</div>
+  <div id="an-parq">${PARQ.map((q,i)=>`<div class="pq"><p>${i+1}) ${esc(q)}</p>${anGrupo('q'+i,true)}</div>`).join('')}</div>
+  <div class="lbl">Saúde</div>
+  ${t('an-lesoes','Lesões ou dores',r.lesoes,'Ex.: dor no joelho direito')}
+  ${grp('Doenças (marque as que tiver)','doencas')}
+  <div class="fld" id="an-outra"><label>Qual outra doença?</label><input id="an-doenca-outra" maxlength="200" value="${esc(r.doenca_outra||'')}"></div>
+  ${t('an-remedios','Remédios em uso',r.remedios)}
+  ${t('an-cirurgias','Cirurgias',r.cirurgias)}
+  ${fem?grp('Está gestante?','gestante',true):''}
+  <div class="lbl">Hábitos</div>
+  <div class="g3">${num('an-sono','Horas de sono por noite',r.sono,'7')}${num('an-agua','Água por dia (litros)',r.agua,'2')}</div>
+  ${grp('Nível de estresse','estresse')}
+  ${grp('Você fuma?','fuma',true)}
+  ${grp('Bebida alcoólica','bebida')}
+  ${t('an-alimentacao','Como é sua alimentação?',r.alimentacao,'Resumo do dia a dia')}
+  <div class="lbl">Treino</div>
+  ${grp('Já treinou antes?','treinou',true)}
+  <div class="fld" id="an-parado"><label>Há quanto tempo está parado(a)?</label><input id="an-parado-in" maxlength="100" value="${esc(r.parado||'')}"></div>
+  ${t('an-gosta','Atividades que gosta ou não gosta',r.gosta)}
+  ${grp('Dias disponíveis na semana','dias')}
+  ${grp('Tempo por treino','tempo')}
+  ${grp('Objetivo principal','objetivo')}
+  ${t('an-obs','Observações',r.obs,'Algo mais que seu personal deve saber?')}
+  <div class="msg" id="msg"></div>
+  <button class="btn" id="bt-an" onclick="anSalvar()">Salvar anamnese</button>`);
+  anVis();
+}
+async function anSalvar(){
+  if(!S.an)return;const {alunoId}=S.an,r=S.an.r,a=aluno(alunoId);
+  if(r.parq.some(x=>x!=='sim'&&x!=='nao')){msg('Responda as 7 perguntas de saúde (Sim ou Não).');const e=$('an-parq');if(e)e.scrollIntoView({block:'start'});return}
+  const sono=pnum(val('an-sono')),agua=pnum(val('an-agua'));
+  if(Number.isNaN(sono)||(sono!=null&&(sono<0||sono>24))){msg('Horas de sono: informe um número de 0 a 24.');return}
+  if(Number.isNaN(agua)||(agua!=null&&(agua<0||agua>20))){msg('Água por dia: informe os litros, por exemplo 2,5.');return}
+  const tx=id=>val(id).trim().slice(0,500),fem=a&&a.sexo!=='masculino';
+  const o={parq:r.parq.slice(),lesoes:tx('an-lesoes'),doencas:(r.doencas||[]).slice(),doenca_outra:(r.doencas||[]).includes('outra')?tx('an-doenca-outra'):'',remedios:tx('an-remedios'),cirurgias:tx('an-cirurgias'),
+    gestante:fem?(r.gestante||null):null,sono,estresse:r.estresse||null,fuma:r.fuma||null,bebida:r.bebida||null,agua,alimentacao:tx('an-alimentacao'),
+    treinou:r.treinou||null,parado:r.treinou==='sim'?tx('an-parado-in'):'',gosta:tx('an-gosta'),dias:(r.dias||[]).slice().sort(),tempo:r.tempo||null,objetivo:r.objetivo||null,obs:tx('an-obs')};
+  const alerta=anAlerta(o);
+  msg('');busy('bt-an',true,'Salvando…');
+  try{
+    const row=await Q(sb.from('apice_anamnese').upsert({aluno_id:alunoId,respostas:o,alerta},{onConflict:'aluno_id'}).select().single());
+    S.anam=S.anam||{};S.anam[alunoId]=row;S.an=null;closeSheet();render();toast('Anamnese salva');
+    if(!eP())avisar('apice_anamnese',row.id);
+  }catch(e){busy('bt-an',false);msg(traduzErro(e))}
+}
+function anamCardAluno(a){
+  if(!anOk()||S.anam[a.id])return'';
+  return`<div class="alert" id="anamCard" onclick="anamSheet('${esc(a.id)}')"><i style="background:var(--red)"></i><div><b>Preencha sua anamnese (2 min)</b><small>Ajuda seu personal a montar um treino seguro para você. Toque para começar.</small></div></div>`;
+}
+function anamPerfilBtn(){
+  const a=S.alunos[0];if(!a||!anOk())return'';const row=S.anam[a.id];
+  return`<button class="btn ghost" style="margin-bottom:8px" onclick="closeSheet();anamSheet('${esc(a.id)}')">📋 ${row?'Minha anamnese · atualizada em '+esc(fmtDC(row.atualizado)):'Preencher minha anamnese'}</button>`;
+}
+function anLin(l,v){return v==null||v===''||(Array.isArray(v)&&!v.length)?'':`<div class="anl"><small>${esc(l)}</small>${esc(Array.isArray(v)?v.join(', '):v)}</div>`}
+function anResumo(row){
+  const r=row.respostas||{},sn=v=>v==='sim'?'Sim':v==='nao'?'Não':'';
+  const doen=(r.doencas||[]).map(d=>d==='outra'&&r.doenca_outra?'Outra: '+r.doenca_outra:anLabel('doencas',d));
+  return`<div class="lbl" style="margin-top:12px">Perguntas de saúde (PAR-Q)</div>
+  ${PARQ.map((q,i)=>{const v=(r.parq||[])[i];return`<div class="anl"><small>${i+1}) ${esc(q)}</small>${v==='sim'?'<span class="an-sim">Sim</span>':v==='nao'?'Não':'—'}</div>`}).join('')}
+  <div class="lbl">Saúde</div>
+  ${anLin('Lesões ou dores',r.lesoes)}${anLin('Doenças',doen)}${anLin('Remédios em uso',r.remedios)}${anLin('Cirurgias',r.cirurgias)}${r.gestante?`<div class="anl"><small>Gestante</small>${r.gestante==='sim'?'<span class="an-sim">Sim</span>':'Não'}</div>`:''}
+  <div class="lbl">Hábitos</div>
+  ${anLin('Sono',r.sono!=null?nf(r.sono)+' h por noite':'')}${anLin('Estresse',r.estresse?anLabel('estresse',r.estresse):'')}${anLin('Fuma',sn(r.fuma))}${anLin('Bebida alcoólica',r.bebida?anLabel('bebida',r.bebida):'')}${anLin('Água por dia',r.agua!=null?nf(r.agua)+' L':'')}${anLin('Alimentação',r.alimentacao)}
+  <div class="lbl">Treino</div>
+  ${anLin('Já treinou antes',sn(r.treinou)+(r.treinou==='sim'&&r.parado?' · parado há '+r.parado:''))}${anLin('Atividades que gosta ou não',r.gosta)}${anLin('Dias disponíveis',(r.dias||[]).map(d=>anLabel('dias',d)))}${anLin('Tempo por treino',r.tempo?anLabel('tempo',r.tempo):'')}${anLin('Objetivo principal',r.objetivo?anLabel('objetivo',r.objetivo):'')}
+  ${r.obs?`<div class="lbl">Observações</div>${anLin('Observações livres',r.obs)}`:''}`;
+}
+function anamCardPersonal(a){
+  if(!anOk())return'';const row=S.anam[a.id],id=esc(a.id);
+  if(!row)return`<div class="lbl" style="margin-top:4px">Anamnese</div><div class="card" id="anamCard"><p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Aluno ainda não preencheu.</p><button class="btn ghost" style="height:46px;font-size:14px" onclick="anamSheet('${id}')">Preencher eu mesma</button></div>`;
+  return`<div class="lbl" style="margin-top:4px">Anamnese</div><div class="card" id="anamCard"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><small style="color:var(--mute);font-size:12px">Atualizada em ${esc(fmtDC(row.atualizado))}</small>${row.alerta?'<span class="badge" style="color:var(--red2);background:#E5484D1f;font-size:12px">⚠️ Atenção</span>':''}</div>
+  ${anResumo(row)}<button class="btn ghost" style="height:46px;font-size:14px;margin-top:12px" onclick="anamSheet('${id}')">Editar</button></div>`;
 }
 
 /* ---- treinos / programas / exercícios ---- */
@@ -1409,6 +1571,7 @@ V.hoje=()=>{
    <div class="ring"><svg width="74" height="74" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${R}" fill="none" stroke="#24272D" stroke-width="7"/><circle cx="37" cy="37" r="${R}" fill="none" stroke="#E5484D" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 37 37)"/></svg><b>${feitos}/${dia.ex.length}</b></div>
    <div style="min-width:0"><div style="font-size:12px;font-weight:700;color:${LV[nivel].hex};letter-spacing:.1em">${esc(dia.n.toUpperCase())}${pl.ficha?'':' · '+LV[nivel].nome.toUpperCase()}</div><h4 style="font-size:22px;margin-top:4px">${esc(dia.f||dia.n)}</h4><p style="max-width:none">${esc(pl.ficha?dia.ex.length+(dia.ex.length===1?' exercício':' exercícios'):pl.tempo)}</p></div></div></div>
   ${mensalAlunoTopo(a)}
+  ${anamCardAluno(a)}
   ${dia.obs?`<div class="alert" style="cursor:default"><i style="background:var(--palco)"></i><div><b>Recado do seu personal</b><small style="color:#CFCAC1">${esc(dia.obs)}</small></div></div>`:''}
   ${naoLidos(a).length?`<div class="alert" id="seloResp" onclick="verRespostas()"><i style="background:var(--red)"></i><div><b>Seu personal respondeu</b><small>${naoLidos(a).length===1?'Toque para ver a resposta do '+esc(naoLidos(a)[0].treino||'treino'):'Toque para ver as '+naoLidos(a).length+' respostas'}</small></div></div>`:''}
   ${ja?`<div class="alert"><i style="background:var(--base)"></i><div><b>Você já treinou hoje</b><small>${esc(ja.treino)} registrado. Pode fazer outro se quiser.</small></div></div>`:''}

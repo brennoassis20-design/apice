@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-26-anamnese",
+    "data": "2026-11-26",
+    "titulo": "Anamnese do aluno",
+    "texto": "O aluno preenche a anamnese pelo próprio app (PAR-Q, saúde, hábitos e rotina de treino) e você recebe um aviso quando ele terminar, com ⚠️ se ele marcar algo de saúde. Você vê o resumo na ficha do aluno e, na lista de alunos, o ⚠️ aparece ao lado do nome. Se preferir, dá para preencher você mesma pelo aluno."
+  },
+  {
     "id": "2026-11-26-fotos",
     "data": "2026-11-26",
     "titulo": "Fotos de evolução",

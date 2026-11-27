@@ -10,18 +10,32 @@
   const add = (p, d, l) => [p[0] + d[0] * l, p[1] + d[1] * l];
   const f1 = n => (Math.round(n * 10) / 10).toString();
 
+  // dois ossos (A→E→T) com comprimentos l1,l2; s = lado da dobra (1 ou -1)
+  function ik(A, T, l1, l2, s) {
+    const dx = T[0] - A[0], dy = T[1] - A[1], d = Math.hypot(dx, dy) || 1e-3;
+    const D = Math.min(Math.max(d, Math.abs(l1 - l2) + .01), l1 + l2 - .01);
+    const a = (l1 * l1 + D * D - l2 * l2) / (2 * D), h = Math.sqrt(Math.max(0, l1 * l1 - a * a)), ux = dx / d, uy = dy / d;
+    return [[A[0] + ux * a - uy * h * s, A[1] + uy * a + ux * h * s], [A[0] + ux * D, A[1] + uy * D]];
+  }
   function solve(P) {
     let hip, knee, ankle;
     if (P.anchor) { ankle = P.anchor; knee = add(ankle, dir(P.sh), -L.sh); hip = add(knee, dir(P.th), -L.th); }
+    else if (P.foot) { hip = P.hip; [knee, ankle] = ik(hip, P.foot, L.th, L.sh, P.ks ?? 1); }
     else { hip = P.hip; knee = add(hip, dir(P.th), L.th); ankle = add(knee, dir(P.sh), L.sh); }
-    const knee2 = add(hip, dir(P.th2 ?? P.th), L.th), ankle2 = add(knee2, dir(P.sh2 ?? P.sh), L.sh);
+    let knee2 = knee, ankle2 = ankle;
+    if (P.foot2) [knee2, ankle2] = ik(hip, P.foot2, L.th, L.sh, P.ks2 ?? P.ks ?? 1);
+    else if (P.th2 != null || P.sh2 != null) { knee2 = add(hip, dir(P.th2 ?? P.th ?? 0), L.th); ankle2 = add(knee2, dir(P.sh2 ?? P.sh ?? 0), L.sh); }
     const fa1 = P.footA ?? 90, fa2 = P.footA2 ?? P.footA ?? 90;
     const u = dir(P.torso), sho = add(hip, u, L.torso);
     const n = [-u[1], u[0]];
     const head = add(sho, u, L.neck + L.head);
     const rot = P.rel ? P.torso - 180 : 0;
-    const elb = add(sho, dir(P.ua + rot), L.ua), wr = add(elb, dir(P.fa + rot), L.fa);
-    const elb2 = add(sho, dir((P.ua2 ?? P.ua) + rot), L.ua), wr2 = add(elb2, dir((P.fa2 ?? P.fa) + rot), L.fa);
+    let elb, wr, elb2, wr2;
+    if (P.hand) [elb, wr] = ik(sho, P.hand, L.ua, L.fa, P.hs ?? 1);
+    else { elb = add(sho, dir((P.ua ?? 0) + rot), L.ua); wr = add(elb, dir((P.fa ?? 0) + rot), L.fa); }
+    if (P.hand2) [elb2, wr2] = ik(sho, P.hand2, L.ua, L.fa, P.hs2 ?? P.hs ?? 1);
+    else if (P.ua2 != null || P.fa2 != null) { elb2 = add(sho, dir((P.ua2 ?? P.ua ?? 0) + rot), L.ua); wr2 = add(elb2, dir((P.fa2 ?? P.fa ?? 0) + rot), L.fa); }
+    else { elb2 = elb; wr2 = wr; }
     return { hip, knee, ankle, knee2, ankle2, fa1, fa2, sho, head, elb, wr, elb2, wr2, u, n };
   }
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -97,6 +111,7 @@
 <filter id="apSombra" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
 </defs>`;
 
+  const bar = (a, b, w, fill, stroke) => { const fr = frame(a, b), nn = [-fr.d[1], fr.d[0]]; const p = [add(a, nn, w / 2), add(b, nn, w / 2), add(b, nn, -w / 2), add(a, nn, -w / 2)]; return `<path d="M${p.map(q => f1(q[0]) + ',' + f1(q[1])).join(' L')}Z" fill="${fill}" stroke="${stroke || 'none'}" stroke-width="1" stroke-linejoin="round"/>`; };
   function draw(ex, P) {
     const J = solve(P), prim = ex.prim || [], sec = ex.sec || [], kit = ex.kit || [];
     const nivel = m => prim.includes(m) ? 1 : sec.includes(m) ? .45 : 0;
@@ -104,9 +119,24 @@
     // chão e aparelhos de fundo
     const groundX = (J.ankle[0] + J.ankle2[0]) / 2;
     s += `<ellipse cx="${f1(groundX + 4)}" cy="194" rx="${kit.includes('bench') || kit.includes('mat') ? 70 : 30}" ry="4" fill="#000" opacity=".45" filter="url(#apSombra)"/>`;
-    if (kit.includes('bench')) s += `<rect x="64" y="140" width="102" height="10" rx="4" fill="#2E3138" stroke="#40444C"/><rect x="74" y="150" width="7" height="42" rx="2" fill="#26292F"/><rect x="149" y="150" width="7" height="42" rx="2" fill="#26292F"/>`;
+    if (kit.includes('bench')) { const bc = ex.banco || { x: 64, y: 140, w: 102 }, ph = 192 - bc.y - 10; s += `<rect x="${bc.x}" y="${bc.y}" width="${bc.w}" height="10" rx="4" fill="#2E3138" stroke="#40444C"/><rect x="${bc.x + 10}" y="${bc.y + 10}" width="7" height="${ph}" rx="2" fill="#26292F"/><rect x="${bc.x + bc.w - 17}" y="${bc.y + 10}" width="7" height="${ph}" rx="2" fill="#26292F"/>`; }
     if (kit.includes('mat')) s += `<rect x="0" y="188" width="232" height="4" rx="2" fill="#2A2D33"/>`;
-    if (kit.includes('cable')) s += `<rect x="204" y="-30" width="8" height="222" rx="3" fill="#24272D"/><circle cx="198" cy="-20" r="7" fill="#2E3138" stroke="#5A5F68" stroke-width="2"/><line x1="196" y1="-13" x2="${f1(J.wr[0])}" y2="${f1(J.wr[1])}" stroke="#7A7F88" stroke-width="1.4"/>`;
+    const J0 = solve(ex.A), PAD = '#2E3138', PADL = '#40444C', PE = '#26292F';
+    if (kit.includes('cable')) {
+      const pl = ex.polia || [198, -20], fim = ex.caboEm === 'ankle' ? J.ankle : J.wr;
+      if (ex.torre !== false) s += `<rect x="${pl[0] + 6}" y="-30" width="8" height="222" rx="3" fill="#24272D"/>`;
+      s += `<circle cx="${pl[0]}" cy="${pl[1]}" r="7" fill="${PAD}" stroke="#5A5F68" stroke-width="2"/><line x1="${pl[0]}" y1="${pl[1]}" x2="${f1(fim[0])}" y2="${f1(fim[1])}" stroke="#7A7F88" stroke-width="1.4"/>`;
+    }
+    if (kit.includes('seat')) { const h = J0.hip, y = h[1] + 9; s += `<rect x="${f1(h[0] - 16)}" y="${f1(y)}" width="38" height="8" rx="3" fill="${PAD}" stroke="${PADL}"/><rect x="${f1(h[0] - 2)}" y="${f1(y + 8)}" width="7" height="${f1(Math.max(0, 192 - y - 8))}" rx="2" fill="${PE}"/>`; }
+    if (kit.includes('encosto')) { const a0 = add(add(J0.hip, J0.n, -13), J0.u, -4), a1 = add(a0, J0.u, ex.encostoLen || 56); s += bar(a0, a1, 9, PAD, PADL) + `<line x1="${f1(a0[0])}" y1="${f1(a0[1])}" x2="${f1(a0[0])}" y2="192" stroke="${PE}" stroke-width="6"/>`; }
+    if (kit.includes('legpress')) {
+      const pc = Jx => { const fd = dir(Jx.fa1), dn = [-fd[1], fd[0]]; return { c: add(add(Jx.ankle, fd, 6), dn, 6.5), fd }; };
+      const pa = pc(J0), pb = pc(solve(ex.B)), pn = pc(J), tr = frame(pb.c, pa.c);
+      s += `<line x1="${f1(pb.c[0] - tr.d[0] * 30)}" y1="${f1(pb.c[1] - tr.d[1] * 30)}" x2="${f1(pa.c[0] + tr.d[0] * 12)}" y2="${f1(pa.c[1] + tr.d[1] * 12)}" stroke="#30333A" stroke-width="5" stroke-linecap="round"/>`;
+      s += bar(add(pn.c, pn.fd, -16), add(pn.c, pn.fd, 24), 6, '#3A3E46', '#4E535C');
+    }
+    if (kit.includes('scott')) { const e = J0.elb, sh = J0.sho, d = frame(sh, e).d; let nn = [-d[1], d[0]]; if (nn[1] < 0) nn = [-nn[0], -nn[1]]; const a0 = add(add(sh, d, 6), nn, 8), a1 = add(add(e, d, 4), nn, 8); s += bar(a0, a1, 7, PAD, PADL); const m = [(a0[0] + a1[0]) / 2, (a0[1] + a1[1]) / 2]; s += `<line x1="${f1(m[0])}" y1="${f1(m[1])}" x2="${f1(m[0])}" y2="192" stroke="${PE}" stroke-width="6"/>`; }
+
 
     const part = (a, b, st, torso, far, musKey) => {
       let o = `<path d="${segPath(a, b, st, torso)}" fill="${far ? SKINF : SKIN}" stroke="${far ? LINEF : LINE}" stroke-width=".9" stroke-linejoin="round"/>`;
@@ -159,6 +189,9 @@
     // pesos na frente
     if (kit.includes('plate')) s += `<circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1])}" r="19" fill="url(#apAnilha)" stroke="#4E535C" stroke-width="1.6"/><circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1])}" r="12.5" fill="none" stroke="#454A53" stroke-width="1"/><circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1])}" r="3.6" fill="#9AA0A9"/>`;
     if (kit.includes('db')) s += `<circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1])}" r="8.5" fill="url(#apAnilha)" stroke="#4E535C" stroke-width="1.4"/><circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1])}" r="2.4" fill="#9AA0A9"/>`;
+    if (kit.includes('kb')) s += `<circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1] + 10)}" r="8.5" fill="url(#apAnilha)" stroke="#4E535C" stroke-width="1.4"/><path d="M${f1(J.wr[0] - 5)},${f1(J.wr[1] + 4)} Q${f1(J.wr[0])},${f1(J.wr[1] - 6)} ${f1(J.wr[0] + 5)},${f1(J.wr[1] + 4)}" fill="none" stroke="#5A5F68" stroke-width="2.4"/>`;
+    if (kit.includes('barra')) s += `<line x1="${f1(J.wr[0])}" y1="${f1(J.wr[1] - 2)}" x2="${f1(J.wr[0])}" y2="${f1(J.wr[1] - 18)}" stroke="#30333A" stroke-width="3"/><circle cx="${f1(J.wr[0])}" cy="${f1(J.wr[1] - 2)}" r="3.6" fill="#9AA0A9"/>`;
+    if (kit.includes('roller')) { const fr = frame(J.knee, J.ankle), sg = ex.rolo === 'b' ? -1 : 1, rc = add(add(J.ankle, fr.d, -6), fr.f, 9 * sg); s += `<line x1="${f1(J.knee[0])}" y1="${f1(J.knee[1])}" x2="${f1(rc[0])}" y2="${f1(rc[1])}" stroke="#5A5F68" stroke-width="2.4" stroke-linecap="round"/><circle cx="${f1(rc[0])}" cy="${f1(rc[1])}" r="6" fill="${PAD}" stroke="${PADL}" stroke-width="1.2"/>`; }
     return s;
   }
 

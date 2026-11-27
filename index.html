@@ -365,6 +365,8 @@ body.modo .rest{display:none!important}
 .mm .bmap .m{fill:#5A5F67;stroke:#2A2D33}
 .mm .bmap.click .m:hover{fill:#7A8089}
 .mm .bmap .sel{fill:var(--musc);stroke:#B8343A}
+.exg{font-size:15px;font-weight:700;margin:18px 0 8px;color:var(--bone)}
+.exg span{color:var(--dim);font-weight:500;font-size:13px;margin-left:4px}
 .anq summary{cursor:pointer;color:var(--acc);font-size:14px;font-weight:600;padding:10px 0;list-style:none}
 .anq summary::-webkit-details-marker{display:none}
 .anq[open] summary{color:var(--mute)}
@@ -456,8 +458,9 @@ p,small{text-wrap:pretty}
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetIn"></div></div>
 <div class="rest" id="rest"><b id="rest-t"></b><button onclick="restAdd(-15)">−15</button><button onclick="restAdd(15)">+15</button><button class="pl" onclick="restPular()">Pular</button></div>
 <div class="toast" id="toast"></div>
-<script src="figura.js"></script>
+<script src="figura.js?v=2"></script>
 <script src="mapa.js"></script>
+<script src="exercicios.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const LV={
@@ -517,6 +520,7 @@ const EX={
   erro:'Quadril caindo e lombar afundando.',
   pres:{base:'3 × 30 s',forte:'3 × 45 s',palco:'4 × 60 s'}}
 };
+Object.assign(EX,window.APICE_EX||{}); // biblioteca ampliada (exercicios.js)
 
 const PROG={
  base:{titulo:'Fundamentos',freq:'3x por semana',dur:'8 semanas',tempo:'45 min',desc:'Corpo inteiro, técnica antes de carga. Para quem nunca treinou ou está voltando.',
@@ -686,15 +690,16 @@ function stageSVG(id,ex,static_){
 const FITVB={};
 function fitFigs(root){
   (root||document).querySelectorAll('svg[data-fig]').forEach(svg=>{
-    const k=svg.dataset.fig,ex=EX[k];if(!ex)return;
+    const k0=svg.dataset.fig,ex=EX[k0];if(!ex)return;
+    const th=!!svg.closest('.thumb'),k=k0+(th?'#t':'');
     if(!FITVB[k]){try{
       const g=document.createElementNS('http://www.w3.org/2000/svg','g');svg.appendChild(g);
-      let b=null;[ex.A,ex.B].forEach(po=>{g.innerHTML=APICE_FIG.draw(ex,po);const r=g.getBBox();
+      let b=null;(th?[ex.B]:[ex.A,ex.B]).forEach(po=>{g.innerHTML=APICE_FIG.draw(ex,po);const r=g.getBBox();
         b=b?{x1:Math.min(b.x1,r.x),y1:Math.min(b.y1,r.y),x2:Math.max(b.x2,r.x+r.width),y2:Math.max(b.y2,r.y+r.height)}:{x1:r.x,y1:r.y,x2:r.x+r.width,y2:r.y+r.height}});
       svg.removeChild(g);if(!b||b.x2-b.x1<5)return;
       b.y2=Math.max(b.y2,APICE_FIG.ground+2);
-      const w=b.x2-b.x1,h=b.y2-b.y1,pad=Math.max(w,h)*.08,cx=(b.x1+b.x2)/2,cy=(b.y1+b.y2)/2;
-      let W=w+pad*2,H=h+pad*2;const AR=1.45;if(W/H<AR)W=H*AR;else H=W/AR;
+      const w=b.x2-b.x1,h=b.y2-b.y1,pad=Math.max(w,h)*(th?.05:.08),cx=(b.x1+b.x2)/2,cy=(b.y1+b.y2)/2;
+      let W=w+pad*2,H=h+pad*2;const AR=th?1.2:1.45;if(W/H<AR)W=H*AR;else H=W/AR;
       FITVB[k]=[cx-W/2,Math.min(cy-H/2,b.y2+pad*.6-H),W,H].map(n=>Math.round(n*10)/10).join(' ');
     }catch(_){return}}
     svg.setAttribute('viewBox',FITVB[k]);
@@ -719,6 +724,10 @@ const MMLAY={
  f:{l:[['ombro',145,86],['peito',117,92],['abdomen',108,150],['quadriceps',119,268]],r:[['biceps',146,124],['obliquo',124,165],['antebraco',150,205],['panturrilha',118,382]]},
  b:{l:[['trapezio',114,72],['dorsal',121,130],['lombar',105,175],['posterior',119,295]],r:[['triceps',146,122],['antebraco',150,200],['gluteo',122,232],['panturrilha',118,378]]}
 };
+const ORDEM_G=['Peito','Costas','Ombros','Braços','Pernas','Glúteos','Abdômen','Funcional'];
+function exPorGrupo(lista){const g={};lista.forEach(k=>{const n=exInfo(k).grupo||'Outros';(g[n]=g[n]||[]).push(k)});
+  const ord=Object.keys(g).sort((a,b)=>((ORDEM_G.indexOf(a)+1)||99)-((ORDEM_G.indexOf(b)+1)||99)||a.localeCompare(b,'pt-BR'));
+  return ord.map(n=>`<div class="exg">${esc(n)} <span>${g[n].length}</span></div><div class="card" style="padding:4px 16px">${g[n].sort((a,b)=>exInfo(a).nome.localeCompare(exInfo(b).nome,'pt-BR')).map(k=>exRow(k)).join('')}</div>`).join('')}
 function exDoMusculo(m){const ks=Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)),pr=[],se=[];
   ks.forEach(k=>{const i=exInfo(k);if(i.prim.includes(m))pr.push(i.nome);else if(i.sec.includes(m))se.push(i.nome)});return pr.concat(se)}
 function mmCo(k){const e=exDoMusculo(k);
@@ -1840,7 +1849,9 @@ V.exerc=()=>{
    <div class="mm" id="mm"><div class="col l">${MMLAY[S.side==='b'?'b':'f'].l.map(x=>mmCo(x[0])).join('')}</div><div class="fig">${bodyMap(S.side,[],[],true,S.muscle)}</div><div class="col r">${MMLAY[S.side==='b'?'b':'f'].r.map(x=>mmCo(x[0])).join('')}</div><svg class="ov" aria-hidden="true"></svg></div>
    ${S.muscle?`<div style="display:flex;justify-content:center;margin-top:8px"><button class="badge" style="background:var(--redbg);color:var(--red2);font-size:12px;padding:6px 12px" onclick="S.muscle=null;render()">${NOMEM[S.muscle]} ✕</button></div>`:''}</div>
   <div class="lbl">${lista.length} exercícios${S.muscle?' para '+NOMEM[S.muscle].toLowerCase():''}</div>
-  <div class="card" style="padding:4px 16px">${lista.length?lista.map(k=>exRow(k)).join(''):'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p>'}</div>
+  ${!lista.length?'<div class="card" style="padding:4px 16px"><p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p></div>'
+   :S.muscle?`<div class="card" style="padding:4px 16px">${lista.sort((a,b)=>(exInfo(b).prim.includes(S.muscle)-exInfo(a).prim.includes(S.muscle))||exInfo(a).nome.localeCompare(exInfo(b).nome,'pt-BR')).map(k=>exRow(k)).join('')}</div>`
+   :exPorGrupo(lista)}
   ${eP()?`<button class="btn ghost" onclick="crSheet('tab')">${I.plus} Criar meu exercício</button>`:''}`;
 };
 

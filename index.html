@@ -367,6 +367,22 @@ body.modo .rest{display:none!important}
 .mm .bmap .sel{fill:var(--musc);stroke:#B8343A}
 .exg{font-size:15px;font-weight:700;margin:18px 0 8px;color:var(--bone)}
 .exg span{color:var(--dim);font-weight:500;font-size:13px;margin-left:4px}
+.plano-av{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-color:#3DDC8455}
+.plano-av>span:first-child{color:var(--acc);display:grid}
+.plano-av.off{border-color:#FF6B6B66}.plano-av.off>span:first-child{color:var(--red2)}
+.plano-av div{flex:1;min-width:0}.plano-av b{display:block;font-size:15px}.plano-av small{display:block;font-size:13px;color:var(--mute);margin-top:2px}
+.plano-av .pa-ir{color:var(--acc);font-size:13px;font-weight:700;white-space:nowrap}
+.pl-msg{font-size:14px;color:var(--bone);background:var(--s2);border-radius:12px;padding:12px;margin-bottom:12px}
+.pl-now{display:flex;flex-direction:column;gap:2px;padding:4px 0 14px}
+.pl-now small{font-size:13px;color:var(--mute)}.pl-now b{font-size:22px;font-weight:800}.pl-now span{font-size:14px;color:var(--mute)}
+.pl-card{display:grid;grid-template-columns:1fr auto;gap:10px 12px;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.pl-card.on{border-color:var(--acc)}
+.pl-card b{font-size:16px}.pl-card small{display:block;font-size:13px;color:var(--mute)}
+.pl-pr{text-align:right}.pl-pr b{font-size:18px}
+.pl-card .btn,.pl-card .pl-atual{grid-column:1/-1}
+.pl-card a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;height:46px}
+.pl-atual{font-size:13px;font-weight:700;color:var(--acc)}
+.pl-nota{font-size:13px;color:var(--mute);margin:4px 0 10px;line-height:1.45}
 .anq summary{cursor:pointer;color:var(--acc);font-size:14px;font-weight:600;padding:10px 0;list-style:none}
 .anq summary::-webkit-details-marker{display:none}
 .anq[open] summary{color:var(--mute)}
@@ -598,6 +614,8 @@ function traduzErro(e){
   if(/same password|different from the old/i.test(m))return 'A nova senha precisa ser diferente da atual.';
   if(/Failed to fetch|NetworkError|Load failed/i.test(m))return 'Sem conexão com a internet. Confira e tente de novo.';
   if(/Invalid email|valid email/i.test(m))return 'E-mail inválido.';
+  if(/APICE_LIMITE_ALUNOS/.test(m))return 'Seu plano Entrada chegou ao limite de 5 alunos. Passe para o Ilimitado para cadastrar mais.';
+  if(/APICE_PLANO_VENCIDO/.test(m))return 'Sua assinatura venceu. Renove para cadastrar alunos novos; seus alunos atuais continuam treinando.';
   if(/[áéíóúãõç]/i.test(m)&&m.length<200)return m;
   return 'Algo deu errado. Tente de novo em instantes.';
 }
@@ -1070,7 +1088,7 @@ function makeFake(kind){
      async createSignedUrls(ps,exp){await new Promise(r=>setTimeout(r,60));return{data:ps.map(p=>({path:p,error:null,signedUrl:mem[p]?URL.createObjectURL(mem[p].blob):placeholder(p)})),error:null}},
      async remove(ps){await new Promise(r=>setTimeout(r,60));ps.forEach(p=>delete mem[p]);return{data:ps.map(p=>({name:p})),error:null}}})},
    from:t=>new QB(t),
-   rpc:async(n)=>{await new Promise(r=>setTimeout(r,100));if(n!=='apice_pix_do_meu_personal')return{data:null,error:{message:'rpc desconhecida'}};const p=db.apice_perfis[0];return{data:[{pix_tipo:p.pix_tipo,pix_chave:p.pix_chave,pix_nome:p.pix_nome,personal_nome:p.nome}],error:null}},
+   rpc:async(n)=>{await new Promise(r=>setTimeout(r,100));if(n==='apice_meu_plano')return{data:[fakePlano((db.apice_alunos||[]).filter(a=>a.ativo!==false).length)],error:null};if(n!=='apice_pix_do_meu_personal')return{data:null,error:{message:'rpc desconhecida'}};const p=db.apice_perfis[0];return{data:[{pix_tipo:p.pix_tipo,pix_chave:p.pix_chave,pix_nome:p.pix_nome,personal_nome:p.nome}],error:null}},
    functions:{async invoke(n,{body}){await new Promise(r=>setTimeout(r,200));if(n==='apice-notificar'){(window.__push=window.__push||[]).push(body);return{data:{ok:true,enviados:0},error:null}}const a=db.apice_alunos.find(x=>x.id===body.aluno_id);
      if(a.user_id)return{data:{ok:true,situacao:'ja_tem_acesso'},error:null};a.convidado_em=new Date().toISOString();return{data:{ok:true,situacao:'convite_enviado'},error:null}}}
   };
@@ -1208,6 +1226,7 @@ async function carregarTudo(){
     try{S.exps=await Q(sb.from('apice_exercicios').select('*').order('nome'))||[]}catch(_){S.exps=[]}
     try{const an=await Q(sb.from('apice_anamnese').select('*'));S.anam={};(an||[]).forEach(r=>{S.anam[r.aluno_id]=r})}catch(_){S.anam=null}
     try{const pg=await Q(sb.from('apice_pagamentos').select('*').order('competencia'));pg.forEach(r=>{(S.pags[r.aluno_id]=S.pags[r.aluno_id]||[]).push(r)})}catch(_){}
+    S.plano=null;if(p.papel==='personal')await carregarPlano();
     if(p.papel!=='personal'){try{const px=await Q(sb.rpc('apice_pix_do_meu_personal'));S.pix=Array.isArray(px)?px[0]||null:px||null}catch(_){S.pix=null}}
     S.regs={};S.trs={};S.alunos.forEach(a=>{S.regs[a.id]=[];S.trs[a.id]=[]});
     rg.forEach(r=>{(S.regs[r.aluno_id]=S.regs[r.aluno_id]||[]).push(r)});
@@ -1332,12 +1351,56 @@ async function fotoPerfilEscolhida(inp){
 }
 function fotoPerfilRemover(){try{localStorage.removeItem(FOTO_K())}catch(_){}perfilSheet();render()}
 const avBtn=()=>`<span class="hd-acoes">${eP()?sinoBtn():''}<button class="av" onclick="perfilSheet()" aria-label="Perfil">${avIn()}</button></span>`;
+/* ===== Assinatura do personal (Eduzz) =====
+   Preço decidido 27/11: teste 14 dias · Entrada R$ 9,90 (até 5 alunos) · Ilimitado R$ 29,90. Vitalício = sem cobrança. */
+const EDUZZ={entrada:'https://chk.eduzz.com/R9JX1RJZ0X',ilimitado:'https://chk.eduzz.com/VWGNY2ZR07'}; // checkout Eduzz: Entrada 3161871 · Ilimitado 3161878
+const PLANOS={teste:'Teste grátis',entrada:'Entrada',ilimitado:'Ilimitado',vitalicio:'Vitalício'};
+async function carregarPlano(){
+  try{const r=await Q(sb.rpc('apice_meu_plano'));S.plano=(Array.isArray(r)?r[0]:r)||null}catch(_){S.plano=null} // função ainda não criada = cobrança desligada
+}
+function fakePlano(al){const q=QS.get('plano')||'teste',d=n=>new Date(Date.now()+n*864e5).toISOString();
+  const m={teste:['teste',d(9),null,true],teste1:['teste',d(1),null,true],vencido:['teste',d(-2),null,false],entrada:['entrada',d(20),5,true],cheio:['entrada',d(20),5,true],ilimitado:['ilimitado',d(25),null,true],atrasada:['ilimitado',d(-1),null,false],vitalicio:['vitalicio',null,null,true]}[q]||['teste',d(9),null,true];
+  return{plano:m[0],status:q==='atrasada'?'atrasada':'ativa',valido_ate:m[1],limite:m[2],ativo:m[3],alunos:q==='cheio'?5:al}}
+const planoNome=()=>S.plano?PLANOS[S.plano.plano]||S.plano.plano:'';
+function planoDias(){const v=S.plano&&S.plano.valido_ate;return v?Math.ceil((new Date(v)-Date.now())/864e5):null}
+function planoBloqueio(){const p=S.plano;if(!p)return null;if(!p.ativo)return'vencido';if(p.limite!=null&&p.alunos>=p.limite)return'limite';return null}
+function planoAviso(){
+  const p=S.plano;if(!p||p.plano==='vitalicio')return'';
+  const d=planoDias();let t='',s='';
+  if(!p.ativo){t=p.plano==='teste'?'Seu teste grátis acabou':'Sua assinatura venceu';s='Seus alunos continuam treinando. Para cadastrar alunos novos, escolha um plano.'}
+  else if(p.plano==='teste'&&d<=5){t=d<=1?'Último dia do teste grátis':`Faltam ${d} dias do teste grátis`;s='Escolha um plano para continuar cadastrando alunos depois do teste.'}
+  else if(p.limite!=null&&p.alunos>=p.limite){t='Você chegou a 5 alunos';s='É o limite do plano Entrada. O Ilimitado libera quantos alunos quiser.'}
+  else return'';
+  return`<div class="card plano-av${p.ativo?'':' off'}" role="button" tabindex="0" onclick="planoSheet()"><span>${I.card}</span><div><b>${t}</b><small>${s}</small></div><span class="pa-ir">Ver planos</span></div>`;
+}
+function linkAssinar(k){const u=EDUZZ[k];if(!u)return'';
+  const e=encodeURIComponent((S.user&&S.user.email)||''),sep=u.includes('?')?'&':'?';
+  return u+sep+`email=${e}&utm_source=app&utm_medium=apice&utm_campaign=assinatura_${k}&src=app_apice&sck=app_apice`;}
+function planoSheet(motivo){
+  const p=S.plano;if(!p){toast('Planos indisponíveis no momento.');return}
+  const d=planoDias(),vit=p.plano==='vitalicio';
+  const situ=vit?'Sem cobrança, para sempre.':!p.ativo?(p.plano==='teste'?'O teste grátis acabou.':'Venceu em '+fmtTs(p.valido_ate)+'.'):p.plano==='teste'?`${d<=1?'Último dia':'Faltam '+d+' dias'} · até ${fmtTs(p.valido_ate)}`:`Em dia · próxima cobrança até ${fmtTs(p.valido_ate)}`;
+  const topo=motivo==='limite'?'<p class="pl-msg">Seu plano Entrada vai até 5 alunos. Passe para o Ilimitado para cadastrar mais.</p>':motivo==='vencido'?'<p class="pl-msg">Para cadastrar alunos novos, escolha um plano. Seus alunos atuais continuam treinando normalmente.</p>':'';
+  const card=(k,preco,sub)=>{const l=linkAssinar(k),atual=p.plano===k&&p.ativo;
+    return`<div class="pl-card${atual?' on':''}"><div><b>${PLANOS[k]}</b><small>${sub}</small></div><div class="pl-pr"><b>R$ ${preco}</b><small>por mês</small></div>
+    ${atual?'<span class="pl-atual">Seu plano</span>':l?`<a class="btn${k==='ilimitado'?'':' ghost'}" href="${esc(l)}" target="_blank" rel="noopener" onclick="S.voltouCheckout=1">Assinar ${PLANOS[k]}</a>`:'<span class="pl-atual">Em breve</span>'}</div>`};
+  openSheet(`<h4>Meu plano</h4>${topo}
+  <div class="pl-now"><small>Plano atual</small><b>${esc(planoNome())}</b><span>${situ}</span>${p.limite!=null?`<span>${p.alunos} de ${p.limite} alunos</span>`:`<span>${p.alunos} ${p.alunos===1?'aluno ativo':'alunos ativos'}</span>`}</div>
+  ${vit?'':card('entrada','9,90','Até 5 alunos')+card('ilimitado','29,90','Alunos ilimitados')+
+   (p.plano==='entrada'&&p.ativo?'<p class="pl-nota">Mudando para o Ilimitado? Depois de assinar, cancele o Entrada na Eduzz (Minhas compras) para não pagar os dois.</p>':'')+
+   `<p class="pl-nota">Pague com o mesmo e-mail da sua conta (${esc((S.user&&S.user.email)||'')}). A liberação é automática; se não aparecer em alguns minutos, toque em atualizar.</p>
+   <button class="btn ghost" id="bt-pl" onclick="atualizarPlano()">Já assinei, atualizar</button>`}
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">Fechar</button>`);
+}
+async function atualizarPlano(){busy('bt-pl',true,'Atualizando…');await carregarPlano();closeSheet();render();toast(S.plano&&S.plano.ativo&&S.plano.plano!=='teste'?'Plano '+planoNome()+' ativo':'Ainda não recebemos o pagamento')}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.voltouCheckout&&eP()){S.voltouCheckout=0;carregarPlano().then(()=>render())}});
 function perfilSheet(){
   const fp=fotoPerfil();
   openSheet(`<h4>Perfil</h4><div class="prof"><label class="av av-foto" aria-label="${fp?'Trocar foto de perfil':'Adicionar foto de perfil'}">${avIn()}<span class="av-cam">${I.cam}</span><input type="file" accept="image/*" onchange="fotoPerfilEscolhida(this)" hidden></label><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
   <div style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px;flex-wrap:wrap"><label class="mini" style="display:inline-flex;align-items:center;cursor:pointer">${fp?'Trocar foto':'Adicionar foto'}<input type="file" accept="image/*" onchange="fotoPerfilEscolhida(this)" hidden></label>${fp?'<button class="mini red" onclick="fotoPerfilRemover()">Remover</button>':''}<small style="font-size:12px;color:var(--mute)">A foto fica salva só neste celular.</small></div>
   <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">${I.phone} Instalar no celular</button>
   ${pushOk()||(SO==='ios'&&!INSTALADO())?'<button class="btn ghost" style="margin-bottom:8px" onclick="ativarPush()">'+(pushPerm()==='granted'?I.bell+' Notificações ativadas':I.bell+' Ativar notificações')+'</button>':''}
+  ${eP()&&S.plano?`<button class="btn ghost" style="margin-bottom:8px" onclick="planoSheet()">${I.card} Meu plano: ${esc(planoNome())}</button>`:''}
   ${eP()?pixBloco():`<button class="btn ghost" style="margin-bottom:8px" onclick="mensalSheet()">${I.card} Minha mensalidade</button>${anamPerfilBtn()}`}
   <button class="btn ghost" onclick="closeSheet();sair()">Sair da conta</button>`);
 }
@@ -1498,10 +1561,10 @@ V.painel=()=>{
   S.alunos.forEach(a=>{tr7+=trsDe(a.id).filter(t=>String(t.data).slice(0,10)>=lim7).length});
   const ativos=S.alunos.filter(a=>a.ativo!==false).length;
   const head=`<div class="hd"><div><p>${esc(dataLonga())}</p><h2>Olá, ${primeiro(S.perfil.nome)}</h2></div>${avBtn()}</div>`;
-  if(!S.alunos.length)return head+`<div class="card empty"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><path d="M12 42 L28 12 L44 42" fill="none" stroke="#F2F2F2" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="32" x2="46" y2="32" stroke="#3DDC84" stroke-width="3.5" stroke-linecap="round"/></svg>
+  if(!S.alunos.length)return head+planoAviso()+`<div class="card empty"><svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><path d="M12 42 L28 12 L44 42" fill="none" stroke="#F2F2F2" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="32" x2="46" y2="32" stroke="#3DDC84" stroke-width="3.5" stroke-linecap="round"/></svg>
    <h3>Cadastre seu primeiro aluno</h3><p>Adicione o aluno, registre peso e medidas e envie o convite para ele acompanhar os treinos pelo app.</p><button class="btn" onclick="novoAluno()">${I.plus} Novo aluno</button></div>`;
   const at=atencao(),r=resumoMensal();
-  return head+`<div class="lbl" style="margin-top:4px">Precisa de você${at.length?` <span style="font-size:14px;color:var(--mute);font-weight:600">${at.length}</span>`:''}</div>
+  return head+planoAviso()+`<div class="lbl" style="margin-top:4px">Precisa de você${at.length?` <span style="font-size:14px;color:var(--mute);font-weight:600">${at.length}</span>`:''}</div>
   <div class="card" style="padding:2px 16px">${at.length?at.map(qRow).join(''):`<div class="q"><span style="color:var(--acc);display:grid">${I.okc}</span><div class="t" style="cursor:default"><b>Tudo em dia</b><small>Nenhum aluno precisa de atenção agora.</small></div></div>`}</div>
   <div class="lbl">Resumo</div>
   <div class="stats"><div><b>${ativos}</b><small>${ativos===1?'aluno ativo':'alunos ativos'}</small></div><div><b>${tr7}</b><small>treinos em 7 dias</small></div>${r?`<div><b style="color:${r.ab?'var(--red2)':'var(--bone)'}">${r.ab}</b><small>${r.ab===1?'mensalidade aberta':'mensalidades abertas'}</small></div>`:''}</div>
@@ -2052,7 +2115,7 @@ async function salvarTreino(){
 }
 /* ================= FORMULÁRIOS ================= */
 const inp=(id,label,v,extra)=>`<div class="fld"><label>${label}</label><input id="${id}" value="${esc(v==null?'':v)}" ${extra||''}></div>`;
-function novoAluno(){alunoSheet(null)}
+function novoAluno(){const b=planoBloqueio();if(b){planoSheet(b);return}alunoSheet(null)}
 function alunoSheet(id){
   const a=id?aluno(id):{};
   openSheet(`<h4>${id?'Editar aluno':'Novo aluno'}</h4>

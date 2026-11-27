@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-27-modo-treino",
+    "data": "2026-11-27",
+    "titulo": "Modo treino em tela cheia",
+    "texto": "Quando o aluno toca em Começar treino, a tela fica só com o treino: um exercício por vez, com o boneco, as séries e um botão grande \"Série feita\". Ao marcar a série, o descanso aparece grande na parte de baixo, com contagem, −15, +15 e Pular, e mostra o que vem a seguir. No fim de cada exercício aparece o próximo, e no último, Concluir treino. A tela não apaga enquanto ele treina."
+  },
+  {
     "id": "2026-11-27-exercicio-foto",
     "data": "2026-11-27",
     "titulo": "Tela do exercício e foto de perfil",

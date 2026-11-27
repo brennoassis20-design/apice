@@ -312,6 +312,37 @@ input,textarea{caret-color:var(--acc)}
 .av-foto{position:relative;cursor:pointer;overflow:visible}
 .av-foto img{border-radius:50%}
 .av-cam{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;border:2px solid var(--s1)}
+.tm-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}
+.tm-top .back{margin:0;height:40px}
+.tm-t{font-weight:700;font-size:15px}
+.tm-el{font-weight:700;font-size:15px;color:var(--mute);min-width:56px;text-align:right}
+.tm-prog{height:4px;background:var(--s3);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.tm-prog i{display:block;height:100%;background:var(--acc);border-radius:4px;transition:width .3s}
+.tm-dots{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px}
+.tm-dots button{flex:none;width:38px;height:38px;border-radius:11px;background:var(--s1);border:1px solid var(--line);font-weight:700;font-size:14px;color:var(--mute);display:grid;place-items:center}
+.tm-dots button.ok{color:var(--acc)}
+.tm-dots button.ok svg{stroke:var(--acc)}
+.tm-dots button.on{background:var(--bone);color:var(--bg);border-color:var(--bone)}
+.tm-dots button.on.ok svg{stroke:var(--bg)}
+.tm-sub{font-size:14px;color:var(--mute)}
+.tm-h{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 12px;line-height:1.15}
+.tm-stage{cursor:pointer}
+.tm-stage svg{aspect-ratio:auto;height:180px}
+.ser.cur .sin{border-color:var(--bone)}
+.ser.cur>span{color:var(--bone)}
+.tm-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;background:#121417;border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));z-index:6}
+.tm-bar .hint{font-size:13px;color:var(--mute);margin:0 0 10px;line-height:1.4}
+.tm-bar .hint b{color:var(--bone)}
+.tm-bar .btn{height:56px;font-size:17px}
+.tm-rest{display:flex;align-items:center;gap:8px}
+.tm-rest small{display:block;font-size:13px;color:var(--mute);font-weight:600}
+.tm-rest b{display:block;font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.tm-rest button{height:48px;padding:0 14px;border-radius:12px;background:var(--s2);border:1px solid var(--line);font-weight:700;font-size:15px;color:var(--bone)}
+.tm-rest .pl{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.tm-rb{height:4px;background:var(--s3);border-radius:4px;overflow:hidden;margin:10px 0}
+.tm-rb i{display:block;height:100%;width:100%;background:var(--acc);transition:width .25s linear}
+body.modo .view{padding-bottom:calc(env(safe-area-inset-bottom) + 200px)}
+body.modo .rest{display:none!important}
 .lg2 i{width:10px;height:10px;border-radius:50%;background:var(--musc);flex:none}
 .stage .ctl button.on{background:var(--acc);color:var(--acc-ink)}
 .bmap .p,.bmap .sel{fill:var(--musc);stroke:#B8343A}
@@ -1201,7 +1232,7 @@ function render(){
   if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
   const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
   app.innerHTML=(S.stack.length||!['painel','hoje'].includes(S.tab)?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);a11y(app);fitFigs(app);window.scrollTo(0,0);
-  tb.style.display='';
+  tb.style.display=emTreino()?'none':'';document.body.classList.toggle('modo',emTreino());
   tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
 }
 /* ---- sininho de novidades do app (só personal) ---- */
@@ -1761,11 +1792,48 @@ function trocarDia(i){
   const ir=()=>{S.dia=i;S.feitos={};S.aberto=null;closeSheet();render()};
   if(sujo)confirmar('Trocar de treino?','As séries que você já marcou neste treino serão descartadas.','Trocar de treino',ir);else ir();
 }
+const emTreino=()=>{const v=S.stack[S.stack.length-1];return!!(v&&v.type==='treino')};
+let WL=null;
+async function telaAcesa(on){try{if(on&&navigator.wakeLock&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}else if(!on&&WL){await WL.release();WL=null}}catch(_){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&emTreino())telaAcesa(true)});
 function comecar(){
-  const p=diaAtual().ex.find(it=>!(S.feitos[it.id]&&S.feitos[it.id].feito));if(!p)return;
-  S.aberto=p.id;render();
-  setTimeout(()=>{const e=document.querySelector('[data-ex="'+CSS.escape(p.id)+'"]');if(e)window.scrollTo({top:e.getBoundingClientRect().top+window.scrollY-12,behavior:RM?'auto':'smooth'})},30);
+  if(!S.tIni)S.tIni=Date.now();
+  S.exAtual=null;go({type:'treino'});telaAcesa(true);audioUnlock();
 }
+function sairTreino(){telaAcesa(false);back()}
+function irEx(n){S.exAtual=n;render()}
+function treinoIdx(){const ex=diaAtual().ex;let i=S.exAtual;if(i==null||i<0||i>=ex.length){i=ex.findIndex(it=>!(S.feitos[it.id]&&S.feitos[it.id].feito));if(i<0)i=0;S.exAtual=i}return i}
+function serieAgora(k,n){serieOk(k,n);try{navigator.vibrate&&navigator.vibrate(30)}catch(_){}}
+V.treino=()=>{
+  const a=S.alunos[0];if(!a)return semAluno();
+  const dia=diaAtual(),ex=dia.ex;if(!ex.length)return`<button class="back" onclick="sairTreino()">${I.back} Sair</button><p>Sem exercícios neste treino.</p>`;
+  const i=treinoIdx(),it=ex[i],inf=exInfo(it.k),f=ensureSer(it.id),ik=esc(it.id),nivel=nivelAluno();
+  const trs=trsDe(a.id);let uc='';for(const t of trs){const e=(t.exercicios||[]).find(x=>x.chave===it.k&&x.carga);if(e){uc=e.carga;break}}
+  const totS=ex.reduce((n,e)=>n+ensureSer(e.id).series.length,0),feitas=ex.reduce((n,e)=>n+ensureSer(e.id).series.filter(x=>x.feito).length,0);
+  const prox=f.series.findIndex(x=>!x.feito),desc=REST.fim!=null,seg=ex[i+1],todos=ex.every(e=>ensureSer(e.id).feito);
+  const ps=prox>=0?f.series[prox]:null;
+  const meta=x=>[x.reps||x.pr?(x.reps||x.pr)+(it.seg?' s':' reps'):'',x.carga||x.pc?(x.carga||x.pc)+' kg':''].filter(Boolean).join(' · ');
+  const aSeguir=ps?`Série ${prox+1} de ${f.series.length}${meta(ps)?' · '+meta(ps):''}`:seg?'Próximo: '+exInfo(seg.k).nome:'Último exercício feito';
+  let bar;
+  if(desc)bar=`<div class="tm-rest"><div style="flex:1;min-width:0"><small>Descanso</small><b id="rest-big">--:--</b></div><button onclick="restAdd(-15)" aria-label="Menos 15 segundos">−15</button><button onclick="restAdd(15)" aria-label="Mais 15 segundos">+15</button><button class="pl" onclick="restPular()">Pular</button></div>
+    <div class="tm-rb"><i id="rest-bar"></i></div><p class="hint">A seguir: <b>${esc(aSeguir)}</b></p>`;
+  else if(ps)bar=`<p class="hint">Faça a <b>série ${prox+1} de ${f.series.length}</b>${meta(ps)?': '+esc(meta(ps)):''}. Fez diferente? Ajuste acima antes.</p><button class="btn" onclick="serieAgora('${ik}',${prox})">${I.check} Série ${prox+1} feita</button>`;
+  else if(seg)bar=`<p class="hint">Exercício concluído.</p><button class="btn" onclick="irEx(${i+1})">Próximo: ${esc(exInfo(seg.k).nome)}</button>`;
+  else bar=`<p class="hint">${todos?'Todos os exercícios feitos.':'Este era o último. Ainda há exercícios sem marcar.'}</p><button class="btn" onclick="feedbackSheet()">Concluir treino</button>`;
+  return`<div class="tm">
+  <div class="tm-top"><button class="back" onclick="sairTreino()" aria-label="Sair do modo treino">${I.back} Sair</button><span class="tm-t">${esc(dia.n)}</span><span class="tm-el" id="tm-el">0:00</span></div>
+  <div class="tm-prog" role="progressbar" aria-valuemin="0" aria-valuemax="${totS}" aria-valuenow="${feitas}"><i style="width:${totS?feitas/totS*100:0}%"></i></div>
+  <div class="tm-dots">${ex.map((e,n)=>{const ok=ensureSer(e.id).feito;return`<button class="${n===i?'on':''} ${ok?'ok':''}" onclick="irEx(${n})" aria-label="Exercício ${n+1}: ${esc(exInfo(e.k).nome)}${ok?', feito':''}">${ok?I.ok:n+1}</button>`}).join('')}</div>
+  <p class="tm-sub">Exercício ${i+1} de ${ex.length} · ${esc(it.pres)}${uc?' · última '+esc(uc):''}</p>
+  <h2 class="tm-h">${esc(inf.nome)}</h2>
+  ${inf.anim?`<div class="stage tm-stage" onclick="go({type:'ex',k:'${esc(it.k)}',n:'${nivel}'})" aria-label="Ver execução">${stageSVG(it.k,EX[it.k],false)}</div>`:''}
+  ${it.obs?`<div class="info">${I.msg}<div><b>Dica do seu personal</b><small>${esc(it.obs)}</small></div></div>`:''}
+  <div class="card" style="padding:10px 14px 14px"><div class="sh"><span></span><span>${it.seg?'Segundos':'Reps'}</span><span>Carga (kg)</span><span></span></div>
+  ${f.series.map((x,n)=>`<div class="ser ${x.feito?'ok':''} ${n===prox&&!desc?'cur':''}"><span>${n+1}ª</span><input class="sin" inputmode="${it.seg?'numeric':'decimal'}" value="${esc(x.reps)}" placeholder="${esc(x.pr||(it.seg?'s':'reps'))}" oninput="setSer('${ik}',${n},'reps',this.value)" aria-label="Repetições da série ${n+1}"><input class="sin" inputmode="decimal" value="${esc(x.carga)}" placeholder="${esc(x.pc||'kg')}" oninput="setSer('${ik}',${n},'carga',this.value)" aria-label="Carga da série ${n+1} em kg"><button class="sok ${x.feito?'on':''}" onclick="serieAgora('${ik}',${n})" aria-label="Série ${n+1} feita" aria-pressed="${!!x.feito}">✓</button></div>`).join('')}
+  </div>
+  ${i>0?`<button class="lnk" style="margin-top:4px" onclick="irEx(${i-1})">${I.back} Exercício anterior</button>`:''}
+  <div class="tm-bar">${bar}</div></div>`;
+};
 V.hoje=()=>{
   const a=S.alunos[0];
   const head=`<div class="hd"><div><p>${esc(dataLonga())}</p><h2>Bora, ${primeiro(S.perfil.nome)}</h2></div>${avBtn()}</div>`;
@@ -1867,17 +1935,18 @@ function audioUnlock(){try{const C=window.AudioContext||window.webkitAudioContex
 function bipe(){
   try{if(!AC)return;const t=AC.currentTime;[0,.22].forEach(d=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.35,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.18);o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+.2)})}catch(_){}
 }
-function startRest(sec){REST.fim=agora()+sec*1000;tickRest()}
-function restAdd(s){if(REST.fim==null)return;REST.fim+=s*1000;tickRest()}
-function restPular(){REST.fim=null;tickRest()}
+function startRest(sec){REST.fim=agora()+sec*1000;REST.tot=sec*1000;tickRest()}
+function restAdd(s){if(REST.fim==null)return;REST.fim+=s*1000;REST.tot=Math.max(REST.tot||0,REST.fim-agora());tickRest()}
+function restPular(){REST.fim=null;tickRest();if(emTreino())rr()}
 function tickRest(){
   const el=$('rest');if(!el)return;
   if(REST.fim==null||S.screen!=='app'){el.classList.remove('on');document.body.classList.remove('resting');return}
   const ms=REST.fim-agora();
-  if(ms<=0){REST.fim=null;el.classList.remove('on');document.body.classList.remove('resting');bipe();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(_){}toast('Descanso acabou — próxima série');return}
-  document.body.classList.add('resting');const s=Math.ceil(ms/1000);$('rest-t').textContent='Descanso '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0');el.classList.add('on');
+  if(ms<=0){REST.fim=null;el.classList.remove('on');document.body.classList.remove('resting');bipe();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(_){}toast('Descanso acabou — próxima série');if(emTreino())rr();return}
+  document.body.classList.add('resting');const s=Math.ceil(ms/1000),tx=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');$('rest-t').textContent='Descanso '+tx;el.classList.add('on');
+  const rb=$('rest-big');if(rb)rb.textContent=tx;const bar=$('rest-bar');if(bar&&REST.tot)bar.style.width=Math.max(0,Math.min(100,ms/REST.tot*100))+'%';
 }
-setInterval(tickRest,250);
+setInterval(()=>{tickRest();const e=$('tm-el');if(e&&S.tIni){const t=Math.floor((Date.now()-S.tIni)/1000);e.textContent=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}},250);
 document.addEventListener('visibilitychange',tickRest);
 function feedbackSheet(){
   S.feel='ok';
@@ -1908,7 +1977,7 @@ async function salvarTreino(){
   busy('bt-fb',true,'Salvando…');
   try{const r=await Q(sb.from('apice_treinos_feitos').insert(row).select().single());
     const ant=trsDe(a.id).slice(),res=resumoTreino(row,ant);
-    S.ultRow=r;(S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.aberto=null;S.dia=null;closeSheet();render();fimTreinoSheet(dia.n,res,sequencia(a.id));avisar('apice_treinos_feitos',r.id)}
+    S.ultRow=r;(S.trs[a.id]=S.trs[a.id]||[]).push(r);sortTrs(a.id);S.feitos={};S.aberto=null;S.dia=null;S.tIni=null;S.exAtual=null;closeSheet();if(emTreino()){S.stack.pop();telaAcesa(false)}render();fimTreinoSheet(dia.n,res,sequencia(a.id));avisar('apice_treinos_feitos',r.id)}
   catch(e){busy('bt-fb',false);toast(traduzErro(e))}
 }
 /* ================= FORMULÁRIOS ================= */

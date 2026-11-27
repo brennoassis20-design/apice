@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-27-icone",
+    "data": "2026-11-27",
+    "titulo": "Ícone novo do app",
+    "texto": "O ícone do Ápice na tela do celular foi refeito com o visual novo e agora fica centralizado no iPhone e no Android. Se o seu ainda aparecer cortado, remova o atalho da tela inicial e instale de novo pelo navegador."
+  },
+  {
     "id": "2026-11-27-visual-novo",
     "data": "2026-11-27",
     "titulo": "Ápice de cara nova",

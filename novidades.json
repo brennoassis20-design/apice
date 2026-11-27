@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-27-exercicio-foto",
+    "data": "2026-11-27",
+    "titulo": "Tela do exercício e foto de perfil",
+    "texto": "O boneco da tela do exercício agora aparece centralizado e inteiro em todos os exercícios, com o nome do músculo trabalhado e os botões de pausa e velocidade logo abaixo. E agora você e seus alunos podem colocar foto de perfil em Perfil > Adicionar foto. A foto fica salva só no celular de cada um, sem ocupar espaço no app."
+  },
+  {
     "id": "2026-11-27-icone",
     "data": "2026-11-27",
     "titulo": "Ícone novo do app",

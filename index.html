@@ -302,6 +302,17 @@ input,textarea{caret-color:var(--acc)}
 .hero{background:var(--s1);border-radius:20px}
 .stage{background:var(--s1)}
 .stage .lg{font-size:12px}
+.stage svg{aspect-ratio:1.45;height:auto}
+.stage-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+.stage .stage-f .ctl{position:static;display:flex;gap:6px;flex:none}
+.stage .stage-f .ctl button{height:34px;padding:0 12px;font-size:13px;background:var(--s2)}
+.lg2{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--bone);font-weight:600;min-width:0}
+.av{overflow:hidden;padding:0}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av-foto{position:relative;cursor:pointer;overflow:visible}
+.av-foto img{border-radius:50%}
+.av-cam{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;border:2px solid var(--s1)}
+.lg2 i{width:10px;height:10px;border-radius:50%;background:var(--musc);flex:none}
 .stage .ctl button.on{background:var(--acc);color:var(--acc-ink)}
 .bmap .p,.bmap .sel{fill:var(--musc);stroke:#B8343A}
 .inst .go{background:var(--acc);color:var(--acc-ink);font-size:13px}
@@ -485,6 +496,7 @@ Object.assign(I,{
  clip:'<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>',
  check:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
  okc:'<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>',
+ cam:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
  reply:'<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v5"/></svg>'
 });
 /* ================= CONFIG ================= */
@@ -598,7 +610,7 @@ const letra=n=>n<26?String.fromCharCode(65+n):String(n+1);
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('on'),2400)}
 function a11y(r){(r||document).querySelectorAll('div[onclick],span[onclick],label[onclick]').forEach(e=>{if(!e.hasAttribute('tabindex'))e.tabIndex=0;if(!e.getAttribute('role'))e.setAttribute('role','button')})}
 document.addEventListener('keydown',e=>{const sh=$('sheet');if(e.key==='Escape'&&sh&&sh.classList.contains('on')){closeSheet();return}const t=e.target;if((e.key==='Enter'||e.key===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.tagName!=='BUTTON'){e.preventDefault();t.click()}});
-function openSheet(h){$('sheetIn').innerHTML='<div class="grab"></div>'+h;$('sheet').classList.add('on');a11y($('sheetIn'))}
+function openSheet(h){$('sheetIn').innerHTML='<div class="grab"></div>'+h;$('sheet').classList.add('on');a11y($('sheetIn'));fitFigs($('sheetIn'))}
 function closeSheet(){$('sheet').classList.remove('on')}
 function confirmar(titulo,texto,rotulo,fn){
   S.cf=fn;
@@ -613,7 +625,25 @@ function msg(t,kind){const e=$('msg');if(!e)return;e.textContent=t||'';e.classNa
 /* ================= FIGURA ================= */
 function stageSVG(id,ex,static_){
   const vb=APICE_FIG.viewBox.split(/[\s,]+/).map(Number);
-  return`<svg viewBox="${APICE_FIG.viewBox}" ${static_?'':`data-anim="${esc(id)}"`}><line x1="${vb[0]}" y1="${APICE_FIG.ground}" x2="${vb[0]+vb[2]}" y2="${APICE_FIG.ground}" stroke="#26292F" stroke-width="1.5"/><g>${APICE_FIG.draw(ex,static_?ex.B:ex.A)}</g></svg>`;
+  return`<svg viewBox="${APICE_FIG.viewBox}" data-fig="${esc(id)}" preserveAspectRatio="xMidYMid meet" ${static_?'':`data-anim="${esc(id)}"`}><line x1="${vb[0]}" y1="${APICE_FIG.ground}" x2="${vb[0]+vb[2]}" y2="${APICE_FIG.ground}" stroke="#26292F" stroke-width="1.5"/><g>${APICE_FIG.draw(ex,static_?ex.B:ex.A)}</g></svg>`;
+}
+const FITVB={};
+function fitFigs(root){
+  (root||document).querySelectorAll('svg[data-fig]').forEach(svg=>{
+    const k=svg.dataset.fig,ex=EX[k];if(!ex)return;
+    if(!FITVB[k]){try{
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');svg.appendChild(g);
+      let b=null;[ex.A,ex.B].forEach(po=>{g.innerHTML=APICE_FIG.draw(ex,po);const r=g.getBBox();
+        b=b?{x1:Math.min(b.x1,r.x),y1:Math.min(b.y1,r.y),x2:Math.max(b.x2,r.x+r.width),y2:Math.max(b.y2,r.y+r.height)}:{x1:r.x,y1:r.y,x2:r.x+r.width,y2:r.y+r.height}});
+      svg.removeChild(g);if(!b||b.x2-b.x1<5)return;
+      b.y2=Math.max(b.y2,APICE_FIG.ground+2);
+      const w=b.x2-b.x1,h=b.y2-b.y1,pad=Math.max(w,h)*.08,cx=(b.x1+b.x2)/2,cy=(b.y1+b.y2)/2;
+      let W=w+pad*2,H=h+pad*2;const AR=1.45;if(W/H<AR)W=H*AR;else H=W/AR;
+      FITVB[k]=[cx-W/2,Math.min(cy-H/2,b.y2+pad*.6-H),W,H].map(n=>Math.round(n*10)/10).join(' ');
+    }catch(_){return}}
+    svg.setAttribute('viewBox',FITVB[k]);
+    const ln=svg.querySelector(':scope>line');if(ln){const v=FITVB[k].split(' ').map(Number);ln.setAttribute('x1',v[0]);ln.setAttribute('x2',v[0]+v[2])}
+  });
 }
 let SPEED=1,PLAY=true,tAcc=0,lastT=performance.now();
 const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -1170,7 +1200,7 @@ function render(){
   const app=$('view'),tb=$('tabbar');
   if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
   const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
-  app.innerHTML=(S.stack.length||!['painel','hoje'].includes(S.tab)?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);a11y(app);window.scrollTo(0,0);
+  app.innerHTML=(S.stack.length||!['painel','hoje'].includes(S.tab)?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);a11y(app);fitFigs(app);window.scrollTo(0,0);
   tb.style.display='';
   tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
 }
@@ -1185,9 +1215,31 @@ function novidadesSheet(){
   if(NOVIDADES.length){try{localStorage.setItem('apice_nov_visto',NOVIDADES[0].id)}catch(_){}render()}
 }
 const sinoBtn=()=>`<button class="sino" onclick="novidadesSheet()" aria-label="Novidades do app"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>${temNovidade()?'<i></i>':''}</button>`;
-const avBtn=()=>`<span class="hd-acoes">${eP()?sinoBtn():''}<button class="av" onclick="perfilSheet()" aria-label="Perfil">${esc(ini(S.perfil&&S.perfil.nome))}</button></span>`;
+/* ---- foto de perfil: fica só neste celular (localStorage), não vai para o servidor ---- */
+const FOTO_K=()=>'apice_foto_'+((S.user&&S.user.id)||'local');
+function fotoPerfil(){try{return localStorage.getItem(FOTO_K())||''}catch(_){return''}}
+const avIn=()=>{const f=fotoPerfil();return f?`<img src="${f}" alt="">`:esc(ini(S.perfil&&S.perfil.nome))};
+async function fotoPerfilEscolhida(inp){
+  const file=inp.files&&inp.files[0];inp.value='';if(!file)return;
+  let bmp=null,url=null,src,w,h;
+  try{
+    if(window.createImageBitmap){try{bmp=await createImageBitmap(file)}catch(_){bmp=null}}
+    if(bmp){src=bmp;w=bmp.width;h=bmp.height}
+    else{url=URL.createObjectURL(file);const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=url});src=im;w=im.naturalWidth;h=im.naturalHeight}
+    const L=Math.min(w,h),c=document.createElement('canvas');c.width=c.height=320;
+    c.getContext('2d').drawImage(src,(w-L)/2,(h-L)/2,L,L,0,0,320,320);
+    const d=c.toDataURL('image/jpeg',.82);
+    try{localStorage.setItem(FOTO_K(),d)}catch(_){toast('Não deu para salvar a foto neste celular.');return}
+    perfilSheet();render();toast('Foto de perfil salva neste celular');
+  }catch(_){toast('Não foi possível ler esta foto. Tente outra.')}
+  finally{if(url)URL.revokeObjectURL(url);if(bmp&&bmp.close)bmp.close()}
+}
+function fotoPerfilRemover(){try{localStorage.removeItem(FOTO_K())}catch(_){}perfilSheet();render()}
+const avBtn=()=>`<span class="hd-acoes">${eP()?sinoBtn():''}<button class="av" onclick="perfilSheet()" aria-label="Perfil">${avIn()}</button></span>`;
 function perfilSheet(){
-  openSheet(`<h4>Perfil</h4><div class="prof"><div class="av">${esc(ini(S.perfil.nome))}</div><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
+  const fp=fotoPerfil();
+  openSheet(`<h4>Perfil</h4><div class="prof"><label class="av av-foto" aria-label="${fp?'Trocar foto de perfil':'Adicionar foto de perfil'}">${avIn()}<span class="av-cam">${I.cam}</span><input type="file" accept="image/*" onchange="fotoPerfilEscolhida(this)" hidden></label><div><h3 style="font-size:18px">${esc(S.perfil.nome)}</h3><p>${esc(S.user&&S.user.email)}</p><p>${eP()?'Personal trainer':'Aluno'}</p></div></div>
+  <div style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px;flex-wrap:wrap"><label class="mini" style="display:inline-flex;align-items:center;cursor:pointer">${fp?'Trocar foto':'Adicionar foto'}<input type="file" accept="image/*" onchange="fotoPerfilEscolhida(this)" hidden></label>${fp?'<button class="mini red" onclick="fotoPerfilRemover()">Remover</button>':''}<small style="font-size:12px;color:var(--mute)">A foto fica salva só neste celular.</small></div>
   <button class="btn ghost" style="margin-bottom:8px" onclick="instalarSheet()">${I.phone} Instalar no celular</button>
   ${pushOk()||(SO==='ios'&&!INSTALADO())?'<button class="btn ghost" style="margin-bottom:8px" onclick="ativarPush()">'+(pushPerm()==='granted'?I.bell+' Notificações ativadas':I.bell+' Ativar notificações')+'</button>':''}
   ${eP()?pixBloco():`<button class="btn ghost" style="margin-bottom:8px" onclick="mensalSheet()">${I.card} Minha mensalidade</button>${anamPerfilBtn()}`}
@@ -1677,11 +1729,11 @@ V.ex=v=>{
   const e=EX[v.k];
   if(!e)return exPropHTML(v,exInfo(v.k));
   return`<button class="back" onclick="back()">${I.back} Voltar</button>
-  <div style="font-size:12px;color:var(--mute);font-weight:600">${e.grupo} · ${e.equip}</div>
-  <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 12px">${e.nome}</h2>
-  <div class="stage">${stageSVG(v.k,e,false)}<div class="lg"><span><span class="dot" style="background:var(--red)"></span>trabalhando</span></div>
+  <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em">${e.nome}</h2>
+  <div style="font-size:14px;color:var(--mute);margin:2px 0 14px">${e.grupo} · ${e.equip}</div>
+  <div class="stage">${stageSVG(v.k,e,false)}<div class="stage-f"><span class="lg2"><i></i>${e.prim.map(m=>NOMEM[m]).join(', ')}</span>
    <div class="ctl"><button onclick="PLAY=!PLAY;this.textContent=PLAY?'Pausar':'Continuar'">${PLAY?'Pausar':'Continuar'}</button>
-   ${[[.5,'0,5x'],[1,'1x']].map(([s,t])=>`<button class="spd ${SPEED===s?'on':''}" onclick="SPEED=${s};document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',b.dataset.s=='${s}'))" data-s="${s}">${t}</button>`).join('')}</div></div>
+   ${[[.5,'0,5x'],[1,'1x']].map(([s,t])=>`<button class="spd ${SPEED===s?'on':''}" onclick="SPEED=${s};document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',b.dataset.s=='${s}'))" data-s="${s}" aria-label="Velocidade ${t}">${t}</button>`).join('')}</div></div></div>
   <div class="card"><b style="font-size:15px">Músculos trabalhados</b>
    <div class="bmaps" style="margin-top:10px"><div>${bodyMap('f',e.prim,e.sec)}<div class="cap">Frente</div></div><div>${bodyMap('b',e.prim,e.sec)}<div class="cap">Costas</div></div></div>
    <div class="legend"><span><i style="background:var(--red)"></i>Principal</span><span><i style="background:rgba(229,72,77,.45)"></i>Auxiliar</span></div>

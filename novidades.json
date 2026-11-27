@@ -1,5 +1,11 @@
 [
   {
+    "id": "2026-11-27-visual-novo",
+    "data": "2026-11-27",
+    "titulo": "Ápice de cara nova",
+    "texto": "O app ganhou visual novo e ficou mais rápido de usar. No Painel, a lista \"Precisa de você\" mostra quem está com mensalidade atrasada, sem treinar ou sem avaliação, com o botão Cobrar, Mensagem ou Avaliar ali mesmo. A ficha do aluno agora tem abas (Treino, Evolução, Saúde e Conta) e um aviso curto quando a anamnese tem algo de atenção. Para o aluno, o treino aparece primeiro, as séries mostram a meta e a carga da última vez em cinza, e no fim ele vê quantas séries fez, o volume e onde subiu a carga. O peso agora fica verde ou vermelho conforme a meta de cada aluno."
+  },
+  {
     "id": "2026-11-26-anamnese",
     "data": "2026-11-26",
     "titulo": "Anamnese do aluno",

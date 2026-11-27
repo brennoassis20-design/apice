@@ -343,6 +343,31 @@ input,textarea{caret-color:var(--acc)}
 .tm-rb i{display:block;height:100%;width:100%;background:var(--acc);transition:width .25s linear}
 body.modo .view{padding-bottom:calc(env(safe-area-inset-bottom) + 200px)}
 body.modo .rest{display:none!important}
+.mm{position:relative;display:grid;grid-template-columns:1fr 112px 1fr}
+.mm .fig{grid-column:2;grid-row:1;align-self:center}
+.mm .col{position:relative;z-index:2;grid-row:1}
+.mm .col.l{grid-column:1;text-align:left;padding-right:14px}
+.mm .col.r{grid-column:3;text-align:right;padding-left:14px}
+.mm .co{position:absolute;left:0;right:0;display:block;text-align:inherit;padding:0;border-radius:10px;cursor:pointer}
+.mm .co b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;color:var(--bone)}
+.mm .co small{display:block;font-size:12px;color:var(--mute);line-height:1.35;margin-top:1px}
+.mm .co i{font-style:normal;color:var(--dim)}
+.mm .co.on b{color:var(--musc)}
+.mm .co.on small{color:var(--bone)}
+.mm .co.vazio small{color:var(--dim)}
+.mm svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+.mm .ov path{fill:none;stroke:#6B717A;stroke-width:1.2;stroke-linejoin:round}
+.mm .ov circle{fill:var(--bone);stroke:var(--s1);stroke-width:1.5}
+.mm .ov .on path{stroke:var(--musc);stroke-width:1.6}
+.mm .ov .on circle{fill:var(--musc)}
+.mm .bmap .sk{fill:#3A3E45;stroke:#3A3E45}
+.mm .bmap .ln{stroke:#2A2D33}
+.mm .bmap .m{fill:#5A5F67;stroke:#2A2D33}
+.mm .bmap.click .m:hover{fill:#7A8089}
+.mm .bmap .sel{fill:var(--musc);stroke:#B8343A}
+.anq summary{cursor:pointer;color:var(--acc);font-size:14px;font-weight:600;padding:10px 0;list-style:none}
+.anq summary::-webkit-details-marker{display:none}
+.anq[open] summary{color:var(--mute)}
 .lg2 i{width:10px;height:10px;border-radius:50%;background:var(--musc);flex:none}
 .stage .ctl button.on{background:var(--acc);color:var(--acc-ink)}
 .bmap .p,.bmap .sel{fill:var(--musc);stroke:#B8343A}
@@ -689,6 +714,37 @@ function loop(now){
 }
 requestAnimationFrame(loop);
 function pickMuscle(k){S.muscle=S.muscle===k?null:k;render()}
+/* mapa de músculos com legendas (aba Exercícios). Ponto no músculo em coordenadas do mapa; metade esquerda espelhada (200-x). */
+const MMLAY={
+ f:{l:[['ombro',145,86],['peito',117,92],['abdomen',108,150],['quadriceps',119,268]],r:[['biceps',146,124],['obliquo',124,165],['antebraco',150,205],['panturrilha',118,382]]},
+ b:{l:[['trapezio',114,72],['dorsal',121,130],['lombar',105,175],['posterior',119,295]],r:[['triceps',146,122],['antebraco',150,200],['gluteo',122,232],['panturrilha',118,378]]}
+};
+function exDoMusculo(m){const ks=Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)),pr=[],se=[];
+  ks.forEach(k=>{const i=exInfo(k);if(i.prim.includes(m))pr.push(i.nome);else if(i.sec.includes(m))se.push(i.nome)});return pr.concat(se)}
+function mmCo(k){const e=exDoMusculo(k);
+  return`<button class="co${S.muscle===k?' on':''}${e.length?'':' vazio'}" data-k="${k}" onclick="pickMuscle('${k}')" aria-pressed="${S.muscle===k}"><b>${NOMEM[k]}</b><small>${e.length?esc(e.slice(0,2).join(' · '))+(e.length>2?` <i>+${e.length-2}</i>`:''):'Nenhum ainda'}</small></button>`}
+function mmLinhas(){
+  const mm=$('mm');if(!mm)return;const ov=mm.querySelector('.ov'),svg=mm.querySelector('.bmap');if(!svg||!svg.getScreenCTM())return;
+  const R=mm.getBoundingClientRect(),m=svg.getScreenCTM(),H=mm.offsetHeight,sv=svg.getBoundingClientRect(),bL=sv.left-R.left,bR=sv.right-R.left;
+  const pt=(x,y)=>{const p=svg.createSVGPoint();p.x=x;p.y=y;const q=p.matrixTransform(m);return[q.x-R.left,q.y-R.top]};
+  let out='';
+  for(const s of['l','r']){
+    const it=MMLAY[S.side==='b'?'b':'f'][s].map(([k,x,y])=>{const[ax,ay]=pt(s==='l'?200-x:x,y),el=mm.querySelector(`.col.${s} [data-k="${k}"]`);return{k,ax,ay,el,h:el.offsetHeight,top:ay-el.offsetHeight/2}});
+    for(let i=1;i<it.length;i++)it[i].top=Math.max(it[i].top,it[i-1].top+it[i-1].h+10);
+    const z=it[it.length-1];z.top=Math.min(z.top,H-z.h);
+    for(let i=it.length-2;i>=0;i--)it[i].top=Math.min(it[i].top,it[i+1].top-it[i].h-10);
+    if(it[0].top<0){it[0].top=0;for(let i=1;i<it.length;i++)it[i].top=Math.max(it[i].top,it[i-1].top+it[i-1].h+10)}
+    for(const{k,ax,ay,el,top}of it){
+      el.style.top=top+'px';
+      const rg=document.createRange();rg.selectNodeContents(el.querySelector('b'));const b=rg.getBoundingClientRect(),ty=b.top+b.height/2-R.top;
+      const tx=s==='l'?b.right-R.left+6:b.left-R.left-6,ex=s==='l'?bL-4:bR+4;
+      out+=`<g class="${S.muscle===k?'on':''}"><path d="M${tx},${ty} H${ex} L${ax},${ay}"/><circle cx="${ax}" cy="${ay}" r="3"/></g>`;
+    }
+  }
+  ov.innerHTML=out;
+}
+addEventListener('resize',()=>requestAnimationFrame(mmLinhas));
+document.fonts&&document.fonts.ready.then(()=>mmLinhas());
 
 /* ================= GRÁFICO ================= */
 function chart(a){
@@ -1231,7 +1287,7 @@ function render(){
   const app=$('view'),tb=$('tabbar');
   if(S.screen!=='app'){app.innerHTML=authHTML();tb.style.display='none';return}
   const v=S.stack.length?S.stack[S.stack.length-1]:{type:S.tab};
-  app.innerHTML=(S.stack.length||!['painel','hoje'].includes(S.tab)?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);a11y(app);fitFigs(app);window.scrollTo(0,0);
+  app.innerHTML=(S.stack.length||!['painel','hoje'].includes(S.tab)?'':bannerInstalar()+bannerPush())+(V[v.type]||V.vazio)(v);a11y(app);fitFigs(app);window.scrollTo(0,0);requestAnimationFrame(mmLinhas);
   tb.style.display=emTreino()?'none':'';document.body.classList.toggle('modo',emTreino());
   tb.innerHTML=TABS[papel()].map(([k,n])=>`<button class="${S.tab===k?'on':''}" onclick="setTab('${k}')">${I[k]}${n}</button>`).join('');
 }
@@ -1696,8 +1752,11 @@ function anLin(l,v){return v==null||v===''||(Array.isArray(v)&&!v.length)?'':`<d
 function anResumo(row){
   const r=row.respostas||{},sn=v=>v==='sim'?'Sim':v==='nao'?'Não':'';
   const doen=(r.doencas||[]).map(d=>d==='outra'&&r.doenca_outra?'Outra: '+r.doenca_outra:anLabel('doencas',d));
+  const pq=r.parq||[],sims=PARQ.map((q,i)=>({q,i})).filter(x=>pq[x.i]==='sim'),resp=pq.filter(v=>v==='sim'||v==='nao').length;
   return`<div class="lbl" style="margin-top:12px">Perguntas de saúde (PAR-Q)</div>
-  ${PARQ.map((q,i)=>{const v=(r.parq||[])[i];return`<div class="anl"><small>${i+1}) ${esc(q)}</small>${v==='sim'?'<span class="an-sim">Sim</span>':v==='nao'?'Não':'—'}</div>`}).join('')}
+  <div class="anl" style="font-size:15px">${!resp?'<span style="color:var(--mute)">Ainda não respondido</span>':sims.length?`<span class="an-sim">${sims.length} ${sims.length===1?'resposta Sim':'respostas Sim'}</span> · ${resp-sims.length} de ${PARQ.length} sem risco`:`<b style="color:var(--acc)">Nenhum risco</b> nas ${resp} perguntas respondidas`}</div>
+  ${sims.map(x=>`<div class="anl"><small>${x.i+1}) ${esc(x.q)}</small><span class="an-sim">Sim</span></div>`).join('')}
+  ${resp?`<details class="anq"><summary>Ver as ${PARQ.length} perguntas</summary>${PARQ.map((q,i)=>{const v=pq[i];return`<div class="anl"><small>${i+1}) ${esc(q)}</small>${v==='sim'?'<span class="an-sim">Sim</span>':v==='nao'?'Não':'—'}</div>`}).join('')}</details>`:''}
   <div class="lbl">Saúde</div>
   ${anLin('Lesões ou dores',r.lesoes)}${anLin('Doenças',doen)}${anLin('Remédios em uso',r.remedios)}${anLin('Cirurgias',r.cirurgias)}${r.gestante?`<div class="anl"><small>Gestante</small>${r.gestante==='sim'?'<span class="an-sim">Sim</span>':'Não'}</div>`:''}
   <div class="lbl">Hábitos</div>
@@ -1776,9 +1835,9 @@ V.ex=v=>{
 };
 V.exerc=()=>{
   const lista=Object.keys(EX).concat(S.exps.map(p=>'p:'+p.id)).filter(k=>{const i=exInfo(k);return !S.muscle||i.prim.includes(S.muscle)||i.sec.includes(S.muscle)});
-  return`<div class="hd"><div><p>Toque no músculo para filtrar</p><h2>Exercícios</h2></div>${avBtn()}</div>
+  return`<div class="hd"><div><p>Toque num músculo ou no nome</p><h2>Exercícios</h2></div>${avBtn()}</div>
   <div class="card" style="padding:12px"><div class="seg2"><button class="${S.side==='f'?'on':''}" onclick="S.side='f';render()">Frente</button><button class="${S.side==='b'?'on':''}" onclick="S.side='b';render()">Costas</button></div>
-   <div style="width:58%;margin:0 auto">${bodyMap(S.side,[],[],true,S.muscle)}</div>
+   <div class="mm" id="mm"><div class="col l">${MMLAY[S.side==='b'?'b':'f'].l.map(x=>mmCo(x[0])).join('')}</div><div class="fig">${bodyMap(S.side,[],[],true,S.muscle)}</div><div class="col r">${MMLAY[S.side==='b'?'b':'f'].r.map(x=>mmCo(x[0])).join('')}</div><svg class="ov" aria-hidden="true"></svg></div>
    ${S.muscle?`<div style="display:flex;justify-content:center;margin-top:8px"><button class="badge" style="background:var(--redbg);color:var(--red2);font-size:12px;padding:6px 12px" onclick="S.muscle=null;render()">${NOMEM[S.muscle]} ✕</button></div>`:''}</div>
   <div class="lbl">${lista.length} exercícios${S.muscle?' para '+NOMEM[S.muscle].toLowerCase():''}</div>
   <div class="card" style="padding:4px 16px">${lista.length?lista.map(k=>exRow(k)).join(''):'<p style="padding:16px 0;color:var(--mute);font-size:13px">Nenhum exercício para esse músculo ainda.</p>'}</div>

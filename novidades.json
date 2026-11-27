@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-27-mapa-musculos",
+    "data": "2026-11-27",
+    "titulo": "Mapa de músculos com exercícios",
+    "texto": "Na aba Exercícios, o boneco ficou menor e cada grupo muscular tem uma linha até o nome dele, com exemplos de exercícios da sua biblioteca (inclusive os que você criou). Toque no nome ou no músculo para ver só os exercícios dele."
+  },
+  {
+    "id": "2026-11-27-parq-resumo",
+    "data": "2026-11-27",
+    "titulo": "Anamnese: PAR-Q resumido",
+    "texto": "Na ficha do aluno, aba Saúde, as perguntas de saúde (PAR-Q) agora mostram primeiro o resumo: quantas respostas Sim e quais são. As 7 perguntas completas ficam em \"Ver as 7 perguntas\"."
+  },
+  {
     "id": "2026-11-27-modo-treino",
     "data": "2026-11-27",
     "titulo": "Modo treino em tela cheia",
